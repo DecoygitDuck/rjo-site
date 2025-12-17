@@ -15,10 +15,8 @@
     --accent2:#86d8ff;
     --line:rgba(92,255,198,.22);
     --line2:rgba(255,255,255,.08);
-
     --border-soft: rgba(255,255,255,.08);
     --border-accent: rgba(92,255,198,.28);
-
     --ease:cubic-bezier(.2,.85,.2,1);
     --dur1:140ms; --dur2:220ms; --dur3:520ms;
     --r:12px;
@@ -39,7 +37,6 @@
     letter-spacing: var(--letter);
     overflow-x:hidden;
   }
-
   /* CRT-ish atmosphere */
   .scanlines{
     position:fixed; inset:0; pointer-events:none; z-index:0;
@@ -62,7 +59,6 @@
     opacity:.06;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E");
   }
-
   .wrap{position:relative; z-index:1; width:min(1100px, 92vw); margin:26px auto 40px;}
   .panel{
     background:
@@ -109,10 +105,8 @@
     transform: translateY(-2px);
     border-color: rgba(92,255,198,.55);
     background: rgba(92,255,198,.08);
-  
     opacity:1;
   }
-
   .hero{ margin-top:16px; padding:24px; position:relative; overflow:hidden;}
   .cmd{
     border:1px solid var(--border-accent);
@@ -147,7 +141,6 @@
   }
   .btn:hover{ transform: translateY(-2px); background: rgba(92,255,198,.14); }
   .btn:active{ transform: translateY(0px) scale(.98); }
-
   /* A big obvious sphere that belongs to the site */
   .siteSphere{
     position:absolute;
@@ -181,14 +174,12 @@
     45%{ transform: translate(-10px, 8px) scale(1.02); }
     70%{ transform: translate(-2px, 14px) scale(0.995); }
   }
-
   .sectionTitle{
     margin:16px 2px 10px;
     display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:baseline;
   }
   .sectionTitle h2{ margin:0; font-size:15px; font-weight:900; letter-spacing:.12em; text-transform:uppercase;}
   .sectionTitle .hint{ color:var(--muted); font-size:12px; }
-
   .grid{
     display:grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -232,24 +223,19 @@
     text-decoration:none;
     color: var(--text);
     border:1px solid var(--border-soft);
-
     /* consistent "pill" geometry */
     padding:10px 16px;
     min-height:38px;
     border-radius:14px;
-
     font-weight:900;
     font-size:13px;
     letter-spacing:0.10em;
     line-height:1;
-
     display:inline-flex;
     align-items:center;
     justify-content:center;
-
     /* ensure border never visually kisses adjacent elements */
     background-clip: padding-box;
-
     transition:
       transform var(--dur1) var(--ease),
       border-color var(--dur1) var(--ease),
@@ -257,9 +243,7 @@
   }
   .link:hover{ transform: translateY(-2px); border-color: rgba(92,255,198,.60); background: rgba(92,255,198,.10); }
   .link.primary{ border-color: rgba(92,255,198,.45); background: rgba(92,255,198,.12); }
-
   /* ===== Mini “preview characters” ===== */
-
 /* Mini NoteCenter (sticky notes + side terminal) */
 .ncPreview{
   width: 92%;
@@ -305,7 +289,6 @@
 .n2{ left:56px; top:18px; transform: rotate(3deg); background: rgba(255,150,180,.14); }
 .n3{ left:22px; top:54px; transform: rotate(2deg); background: rgba(140,220,255,.14); }
 .n4{ left:74px; top:58px; transform: rotate(-2deg); background: rgba(170,255,210,.12); }
-
 .ncTermMini{
   position:relative;
   border-radius:12px;
@@ -339,7 +322,6 @@
   animation: blink 1.1s steps(1,end) infinite;
   margin-left:4px;
 }
-
   .preview{
     height: 140px;
     border-radius: 14px;
@@ -361,7 +343,6 @@
     box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
     pointer-events:none;
   }
-
   /* Mini Orby sphere */
   .miniSphere{
     width:72px; height:72px; border-radius:999px;
@@ -389,7 +370,6 @@
     0%,100%{ transform: translateY(0) scale(1); }
     50%{ transform: translateY(-6px) scale(1.05); }
   }
-
   /* Mini Cube (CSS 3D) */
   .miniCubeScene{ width:78px; height:78px; perspective:520px; }
   .miniCube{
@@ -413,7 +393,6 @@
   .f4{ transform: rotateY(-90deg) translateZ(39px); }
   .f5{ transform: rotateX(90deg) translateZ(39px); }
   .f6{ transform: rotateX(-90deg) translateZ(39px); }
-
   /* Mini Wordbeat typing */
   .typeWrap{ width: 88%; max-width: 260px; }
   .typeHdr{
@@ -434,7 +413,6 @@
     width:9px; height:18px; background: rgba(92,255,198,.92);
     animation: blink 1.1s steps(1,end) infinite;
   }
-
   /* Mini HopHop character */
   .hopWorld{ position:relative; width: 100%; height:100%; }
   .platform{
@@ -472,7 +450,6 @@
     45%{ transform: translateX(-50%) translateY(-22px) rotate(-6deg); }
     65%{ transform: translateX(-50%) translateY(-12px) rotate(5deg); }
   }
-
   .footer{
     margin-top: 16px;
     padding:12px 14px;
@@ -490,7 +467,6 @@
     color:rgba(215,255,233,.88);
     font-weight:900;
   }
-
   /* ===== Mobile flow polish ===== */
   /* iOS notch / safe-area friendly */
   body{
@@ -499,10 +475,8 @@
     padding-right: env(safe-area-inset-right);
     padding-bottom: env(safe-area-inset-bottom);
   }
-
   /* Better anchor positioning under top spacing */
   #apps, #about, #contact { scroll-margin-top: 18px; }
-
   @media (max-width: 720px){
     .wrap{ width: min(1100px, 94vw); margin: 18px auto 28px; }
     .topbar{ padding:14px; gap:12px; }
@@ -512,40 +486,32 @@
     .sectionTitle{ margin:14px 2px 10px; }
     .grid{ gap:14px; }
   }
-
   @media (max-width: 520px){
     .wrap{ width: 94vw; margin: 14px auto 22px; }
     .topbar{ flex-direction: column; align-items: flex-start; }
     .nav{ width:100%; justify-content:flex-start; }
     .nav a{ flex: 1 1 auto; text-align:center; }
-
     .hero{ padding: 18px; }
     .cmd{ padding: 14px; }
     .cmdline{ gap:8px; }
     .cmd p{ font-size:12.5px; }
-
     .actions{ width:100%; gap:10px; }
     .btn{ flex: 1 1 140px; padding:12px 12px; } /* bigger tap */
-
     /* Make the decorative sphere feel intentional on small screens */
     .siteSphere{
       width: 180px; height: 180px;
       right: -64px; top: -78px;
       opacity: .55;
     }
-
     .card{ padding: 14px; }
     .preview{ height: 132px; }
     .footer{ padding: 12px; gap:10px; }
   }
-
   /* Reduce motion for users who prefer it */
   @media (prefers-reduced-motion: reduce){
     .siteSphere, .miniSphere, .miniCube, .hopper{ animation: none !important; }
     .nav a:hover, .btn:hover, .link:hover, .card:hover{ transform:none; }
   }
-
-
   /* ===== Real-ish terminal panel ===== */
   .term{
     margin-top:14px;
@@ -580,7 +546,6 @@
     transition: transform var(--dur1) var(--ease), border-color var(--dur1) var(--ease), background var(--dur1) var(--ease);
   }
   .chip:hover{ transform: translateY(-1px); border-color: rgba(92,255,198,.45); background: rgba(92,255,198,.06); }
-
   .termOut{
     height: 210px;
     overflow:auto;
@@ -631,14 +596,11 @@
     color: var(--muted);
     font-size:12px;
   }
-
   @media (max-width:520px){
     .termOut{ height: 220px; }
     .termLine{ font-size:12.2px; }
     .termInput{ font-size:12.2px; }
   }
-
-
   /* ===== Theme modes ===== */
   body[data-mode="boring"]{
     overflow-x:hidden;
@@ -646,12 +608,10 @@
   body[data-mode="boring"] .scanlines,
   body[data-mode="boring"] .noise,
   body[data-mode="boring"] .vignette{ display:none !important; }
-
   /* Remove terminal vibes in boring mode */
   body[data-mode="boring"] .cmdline .prompt,
   body[data-mode="boring"] .cmdline .blink{ display:none !important; }
   body[data-mode="boring"] .term{ display:none !important; }
-
   /* Keep the hero copy readable without the prompt */
   body[data-mode="boring"] .cmdline{
     font-weight: 900;
@@ -665,14 +625,11 @@
     opacity: .35;
     filter: saturate(1.05) contrast(1.0);
   }
-
-
 /* ==== Dual-mode layout: terminal vs modern ("boring") ==== */
 #boringSite{display:none;}
 body.mode-boring #terminalSite{display:none;}
 body.mode-boring #boringSite{display:block;}
 body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
-
 /* Modern site styling */
 #boringSite{
   color:#0f172a;
@@ -683,7 +640,6 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
 #boringSite *{box-sizing:border-box;}
 #boringSite a{color:inherit; text-decoration:none;}
 #boringSite a:hover{text-decoration:underline;}
-
 .bWrap{max-width:1100px; margin:0 auto; padding:0 20px;}
 .bHeader{
   position:sticky; top:0; z-index:50;
@@ -702,10 +658,8 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
 }
 .bTitle{font-weight:800; letter-spacing:-.02em;}
 .bSub{font-size:12px; color: rgba(15,23,42,.65); margin-top:2px;}
-
 .bLinks{display:flex; gap:16px; font-weight:600; color: rgba(15,23,42,.80);}
 .bCtas{display:flex; gap:10px; align-items:center;}
-
 .bBtn{
   border:1px solid rgba(15,23,42,.14);
   background:#0f172a;
@@ -722,12 +676,10 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
   background: rgba(255,255,255,.80);
   color:#0f172a;
 }
-
 .bMain{padding-bottom:40px;}
 .bHero{padding:42px 0 18px;}
 .bHeroGrid{display:grid; grid-template-columns: 1.2fr .8fr; gap:22px; align-items:stretch;}
 @media (max-width: 900px){ .bHeroGrid{grid-template-columns:1fr; } .bLinks{display:none;} }
-
 .bBadge{
   display:inline-flex; align-items:center; gap:8px;
   padding:7px 10px;
@@ -745,7 +697,6 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
 }
 @media (max-width: 700px){ .bHeroCopy h1{font-size:36px;} }
 .bHeroCopy p{color: rgba(15,23,42,.72); font-size:16px; line-height:1.55; margin:0 0 16px;}
-
 .bHeroActions{display:flex; gap:10px; flex-wrap:wrap; margin: 8px 0 14px;}
 .bStats{display:grid; grid-template-columns: repeat(3, 1fr); gap:10px;}
 @media (max-width: 520px){ .bStats{grid-template-columns:1fr;} }
@@ -757,7 +708,6 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
 }
 .bStat .k{font-size:12px; color: rgba(15,23,42,.62); font-weight:700;}
 .bStat .v{font-size:14px; font-weight:800; margin-top:4px;}
-
 .bHeroCard{
   border-radius:18px;
   border:1px solid rgba(15,23,42,.10);
@@ -786,13 +736,11 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
 .bMini{margin-top:12px; display:grid; gap:8px;}
 .bMiniItem{display:flex; align-items:center; gap:10px; color: rgba(15,23,42,.72); font-weight:650;}
 .dot{width:10px; height:10px; border-radius:999px; background: rgba(37,99,235,.35); border:1px solid rgba(15,23,42,.10);}
-
 .bSection{padding:34px 0;}
 .bAlt{background: rgba(255,255,255,.55); border-top:1px solid rgba(15,23,42,.06); border-bottom:1px solid rgba(15,23,42,.06);}
 .bSectionTop{display:flex; align-items:flex-end; justify-content:space-between; gap:14px; margin-bottom:14px;}
 .bSectionTop h2{margin:0; font-size:26px; letter-spacing:-.02em;}
 .bSectionTop p{margin:0; color: rgba(15,23,42,.65);}
-
 .bGrid{
   display:grid;
   grid-template-columns: repeat(3, 1fr);
@@ -800,7 +748,6 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
 }
 @media (max-width: 900px){ .bGrid{grid-template-columns: repeat(2, 1fr);} }
 @media (max-width: 620px){ .bGrid{grid-template-columns: 1fr;} }
-
 .pCard{
   border-radius:18px;
   border:1px solid rgba(15,23,42,.10);
@@ -824,10 +771,8 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
 .pActions{display:flex; gap:10px; margin-top:auto;}
 .pActions .bBtn{padding:9px 12px; border-radius:12px; font-size:13px;}
 .pActions .bGhost{box-shadow:none;}
-
 .bTwo{display:grid; grid-template-columns: 1.2fr .8fr; gap:18px; align-items:start;}
 @media (max-width: 900px){ .bTwo{grid-template-columns:1fr;} }
-
 .bCallout{
   border-radius:18px;
   border:1px solid rgba(15,23,42,.10);
@@ -837,7 +782,6 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
 }
 .bCalloutTitle{font-weight:900; margin-bottom:6px;}
 .bCalloutText{color: rgba(15,23,42,.70); margin-bottom:12px;}
-
 .bContactRow{display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;}
 .bContactCard{
   border-radius:18px;
@@ -857,12 +801,9 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
   cursor:pointer;
 }
 .bQuickBtn:hover{transform: translateY(-1px);}
-
 .bFooter{padding:22px 0 10px; border-top:1px solid rgba(15,23,42,.08); color: rgba(15,23,42,.70);}
 .bFoot{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;}
 .bFootLinks{display:flex; gap:14px; font-weight:700;}
-
-
 /* === Boring mode v2 (more modern / professional) === */
 #boringSite{
   --bText:#0b1220;
@@ -872,12 +813,10 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
   --bBlue: #2563eb;
   --bTeal: #14b8a6;
 }
-
 .bHeader{
   background: rgba(255,255,255,.78);
   box-shadow: 0 8px 30px rgba(15,23,42,.06);
 }
-
 .bLinks a{
   padding:10px 10px;
   border-radius: 12px;
@@ -886,7 +825,6 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
   background: rgba(37,99,235,.08);
   text-decoration:none;
 }
-
 .bBtn{
   transition: transform 140ms var(--ease), box-shadow 220ms var(--ease), background 140ms var(--ease), border-color 140ms var(--ease);
 }
@@ -896,7 +834,6 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
 .bBtn.bGhost{
   background: rgba(255,255,255,.92);
 }
-
 .bHero{
   padding: 54px 0 18px;
 }
@@ -906,12 +843,10 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
 .bHeroCopy p{
   font-size: 17px;
 }
-
 .bHeroCard{
   border-radius: 22px;
   box-shadow: var(--bShadow);
 }
-
 .pCard{
   border-radius: 22px;
   padding: 16px;
@@ -946,11 +881,9 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
   font-weight:650;
   font-size: 13px;
 }
-
 .bSectionTop h2{
   font-size: 30px;
 }
-
 .bFeatGrid{
   display:grid;
   grid-template-columns: repeat(3, 1fr);
@@ -958,7 +891,6 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
 }
 @media (max-width: 900px){ .bFeatGrid{ grid-template-columns: repeat(2, 1fr);} }
 @media (max-width: 620px){ .bFeatGrid{ grid-template-columns: 1fr;} }
-
 .bFeat{
   border-radius: 22px;
   border:1px solid rgba(15,23,42,.10);
@@ -968,13 +900,11 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
 }
 .bFeat h3{margin:0 0 6px; font-size: 16px; letter-spacing:-.01em;}
 .bFeat p{margin:0; color: rgba(15,23,42,.70); line-height:1.55;}
-
 .bDivider{
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(15,23,42,.10), transparent);
   margin: 18px 0;
 }
-
 .bForm{
   display:grid;
   gap:10px;
@@ -1001,7 +931,6 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
   border-color: rgba(37,99,235,.35);
   box-shadow: 0 0 0 4px rgba(37,99,235,.10);
 }
-
 .bToast{
   position: fixed;
   left: 50%;
@@ -1022,7 +951,6 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
   opacity: 1;
   transform: translateX(-50%) translateY(-4px);
 }
-
 </style>
 </head>
 <body>
@@ -1030,7 +958,6 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
 <div class="scanlines"></div>
 <div class="noise"></div>
 <div class="vignette"></div>
-
 <div class="wrap">
   <header class="panel topbar">
     <div class="brand">
@@ -1043,11 +970,9 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
       <a href="#contact">CONTACT</a>
     </nav>
   </header>
-
   <main>
     <section class="panel hero" id="top">
       <div class="siteSphere" aria-hidden="true"></div>
-
       <div class="cmd">
         <div class="cmdline">
           <span class="prompt">C:\rjo-dev&gt;</span>
@@ -1060,11 +985,10 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
         </p>
         <div class="actions">
           <button class="btn primary" onclick="document.getElementById('apps').scrollIntoView({behavior:'smooth'})">LIST APPS</button>
-          <button class="btn" onclick="pulseSphere()">PING ORBY</button>
+          
         </div>
       </div>
     </section>
-
     <section class="panel term" id="terminal" aria-label="terminal">
       <div class="termHeader">
         <div class="left">
@@ -1079,9 +1003,7 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
           <button class="chip" type="button" onclick="termRun('clear')">clear</button>
         </div>
       </div>
-
       <div class="termOut" id="termOut" role="log" aria-live="polite" aria-label="terminal output"></div>
-
       <div class="termIn">
         <span class="p">C:\rjo-dev&gt;</span>
         <input id="termInput" class="termInput" inputmode="text" autocomplete="off" spellcheck="false"
@@ -1091,13 +1013,10 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
         Pro tip: type <span class="kbd">theme boring</span> for sleek mode, or <span class="kbd">theme green</span> to come back.
       </div>
     </section>
-
-
     <div class="sectionTitle" id="apps">
       <h2>Featured apps</h2>
       <div class="hint">click <span class="kbd">OPEN</span> or <span class="kbd">DEMO</span> (demo is preview-only for now)</div>
     </div>
-
     <section class="grid">
       <!-- ORBY -->
       <article class="card" data-app="orby">
@@ -1114,7 +1033,6 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
           <a class="link" href="#terminal" onclick="termRun('demo orby'); return false;">DEMO</a>
         </div>
       </article>
-
       <!-- CUBE -->
       <article class="card" data-app="cube">
         <div class="cardTop">
@@ -1135,10 +1053,6 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
           <a class="link" href="#terminal" onclick="termRun('demo cube'); return false;">DEMO</a>
         </div>
       </article>
-
-      
-
-
 <!-- NOTECENTER -->
 <article class="card" data-app="notecenter">
   <div class="cardTop">
@@ -1188,7 +1102,6 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
           <a class="link" href="#terminal" onclick="termRun('demo wordbeat'); return false;">DEMO</a>
         </div>
       </article>
-
       <!-- HOPHOP -->
       <article class="card" data-app="hophop">
         <div class="cardTop">
@@ -1208,27 +1121,20 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
         </div>
       </article>
     </section>
-
     <section class="panel" id="about" style="margin-top:14px; padding:16px 16px 14px;">
       <div class="sectionTitle" style="margin:0 0 8px;">
         <h2>About</h2>
-        <div class="hint">“CMD feel” all the way down</div>
       </div>
-      <div style="color:var(--muted); font-size:12px; line-height:1.65;">
-        <span class="prompt">C:\rjo-dev&gt;</span> built for fast demos: clean tiles, tiny previews, full apps in separate pages.
-        If you want, next pass can add a real command input (e.g. <span class="kbd">open orby</span>, <span class="kbd">list</span>, <span class="kbd">help</span>).
-      </div>
+      <div style="color:var(--muted); font-size:12px; line-height:1.65;">        <span class="prompt">C:\rjo-dev&gt;</span> built in <span class="kbd">HTML</span>, <span class="kbd">CSS</span>, and <span class="kbd">vanilla JS</span> — no frameworks, just clean structure + intentional styling.
+        I focus on fast previews—clean tiles, small character animations—and ship full apps on dedicated pages.</div>
     </section>
-
     <footer class="panel footer" id="contact">
       <div><span class="prompt">status:</span> online · <span style="color:rgba(92,255,198,.9); font-weight:900;">ready</span></div>
       <div><span class="prompt">hint:</span> press <span class="kbd">/</span> for help (coming)</div>
     </footer>
   </main>
 </div>
-
 </div>
-
 <div id="boringSite" aria-hidden="true">
   <header class="bHeader">
     <div class="bWrap bNav">
@@ -1251,7 +1157,6 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
       </div>
     </div>
   </header>
-
   <main class="bMain">
     <section class="bHero">
       <div class="bWrap bHeroGrid">
@@ -1292,7 +1197,6 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
         </div>
       </div>
     </section>
-
     <section id="bProjects" class="bSection">
       <div class="bWrap">
         <div class="bSectionTop">
@@ -1302,8 +1206,6 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
         <div id="boringProjectsGrid" class="bGrid" aria-label="Project cards"></div>
       </div>
     </section>
-
-
     <section class="bSection bAlt" id="bServices">
       <div class="bWrap">
         <div class="bSectionTop">
@@ -1326,7 +1228,6 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
         </div>
       </div>
     </section>
-
     <section class="bSection" id="bProcess">
       <div class="bWrap bTwo">
         <div>
@@ -1355,7 +1256,6 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
         </div>
       </div>
     </section>
-
     <section id="bAbout" class="bSection bAlt">
       <div class="bWrap bTwo">
         <div>
@@ -1372,7 +1272,6 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
         </div>
       </div>
     </section>
-
     <section id="bContact" class="bSection">
       <div class="bWrap bTwo">
         <div>
@@ -1380,11 +1279,9 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
           <p style="color: rgba(15,23,42,.70); line-height:1.6; margin:0 0 14px;">
             Tell me what you want built. I’ll reply with scope, milestones, and a clean plan.
           </p>
-
           <div class="bCallout" style="box-shadow:none;">
             <div class="bCalloutTitle">Quick email</div>
             <div class="bCalloutText">Use the form to generate a message, then send it in your email client.</div>
-
             <form class="bForm" id="bContactForm">
               <div class="bField">
                 <div class="bLabel">Your name</div>
@@ -1408,7 +1305,6 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
             </form>
           </div>
         </div>
-
         <div class="bContactCard">
           <div class="bContactTitle">Quick actions</div>
           <div class="bQuick">
@@ -1417,9 +1313,7 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
             <button class="bQuickBtn" data-bcmd="theme blue">Blue terminal</button>
             <button class="bQuickBtn" data-bcmd="clear">Clear terminal</button>
           </div>
-
           <div class="bDivider"></div>
-
           <div style="font-weight:900; margin-bottom:8px;">Availability</div>
           <div style="color: rgba(15,23,42,.70); line-height:1.55;">
             Open to contract or full-time. Best fit: product UI + interactive web apps.
@@ -1427,9 +1321,7 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
         </div>
       </div>
     </section>
-
     <div class="bToast" id="bToast" role="status" aria-live="polite">Copied</div>
-
     <footer class="bFooter">
       <div class="bWrap bFoot">
         <div>© <span id="bYear"></span> rjo-dev</div>
@@ -1442,12 +1334,10 @@ body.mode-boring .scanlines, body.mode-boring .noise{display:none !important;}
     </footer>
   </main>
 </div>
-
 <script>
 /* ===== Helpers ===== */
 const termOut = document.getElementById('termOut');
 const termInput = document.getElementById('termInput');
-
 const APPS = {
   orby:       { name: "ORBY",       href: "orby.html",       tag: "LIVE"  },
   cube:       { name: "CUBE",       href: "cube.html",       tag: "BETA"  },
@@ -1455,9 +1345,7 @@ const APPS = {
   hophop:     { name: "HOPHOP",     href: "hops.html",       tag: "PROTO" },
   notecenter: { name: "NOTECENTER", href: "notecenter.html", tag: "LIVE"  },
 };
-
 const cmds = ["help","list","open","demo","about","contact","clear","theme","ping"];
-
 const themes = {
   // terminal vibes (default)
   green: {
@@ -1487,7 +1375,6 @@ const themes = {
     fontMain:'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
     letter:".02em"
   },
-
   // "boring" = different site entirely (modern/professional)
   boring: {
     mode:"boring",
@@ -1499,21 +1386,17 @@ const themes = {
     letter:"0em"
   }
 };
-
 let hist = [];
 let histIdx = -1;
-
 function escapeHtml(s){
   return (s+"").replace(/[&<>"']/g, (c)=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[c]));
 }
-
 function termDivider(){
   if(!termOut) return;
   const d = document.createElement('div');
   d.className = 'termDivider';
   termOut.appendChild(d);
 }
-
 function termEcho(cmd){
   if(!termOut) return;
   const line = document.createElement('div');
@@ -1522,7 +1405,6 @@ function termEcho(cmd){
   termOut.appendChild(line);
   termOut.scrollTop = termOut.scrollHeight;
 }
-
 function termPrint(text, kind="t"){
   if(!termOut) return;
   const line = document.createElement('div');
@@ -1538,7 +1420,6 @@ function termPrint(text, kind="t"){
   termOut.appendChild(line);
   termOut.scrollTop = termOut.scrollHeight;
 }
-
 function pulseSphere(){
   const s = document.querySelector('.siteSphere');
   if(!s) return;
@@ -1551,7 +1432,6 @@ function pulseSphere(){
     { duration: 520, easing: 'cubic-bezier(.2,.85,.2,1)' }
   );
 }
-
 function spark(el){
   if(!el?.animate) return;
   el.animate(
@@ -1562,7 +1442,6 @@ function spark(el){
     { duration: 360, easing:'cubic-bezier(.2,.85,.2,1)' }
   );
 }
-
 function toast(msg){
   const t = document.getElementById('toast');
   if(!t) return;
@@ -1571,12 +1450,10 @@ function toast(msg){
   clearTimeout(toast._t);
   toast._t = setTimeout(()=>t.classList.remove('show'), 2400);
 }
-
 /* ===== Modern (boring) mode mirrors terminal content ===== */
 function buildModernProjects(){
   const grid = document.getElementById('boringProjectsGrid');
   if(!grid) return;
-
   grid.innerHTML = "";
   const cards = Array.from(document.querySelectorAll('#terminalSite .card'));
   cards.forEach((c)=>{
@@ -1584,10 +1461,8 @@ function buildModernProjects(){
     const tag = (c.querySelector('.tag')?.textContent || "").trim();
     const desc = (c.querySelector('.desc')?.textContent || "").trim();
     const key  = (c.getAttribute('data-app') || "").trim();
-
     const wrap = document.createElement('div');
     wrap.className = 'pCard';
-
     const media = document.createElement('div');
     media.className = 'pMedia';
     const prev = c.querySelector('.preview')?.cloneNode(true);
@@ -1598,7 +1473,6 @@ function buildModernProjects(){
       prev.style.background = "linear-gradient(180deg, rgba(37,99,235,.06), rgba(16,185,129,.05)), #ffffff";
       media.appendChild(prev);
     }
-
     const top = document.createElement('div');
     top.className = 'pTop';
     const h = document.createElement('h3');
@@ -1608,18 +1482,14 @@ function buildModernProjects(){
     t.textContent = tag || 'PROJECT';
     top.appendChild(h);
     top.appendChild(t);
-
     const p = document.createElement('p');
     p.className = 'pDesc';
     p.textContent = desc || 'Details coming soon.';
-
     const meta = document.createElement('div');
     meta.className = 'pMeta';
     meta.innerHTML = `<span>${key || 'app'}</span><span>preview-only</span><span>open | demo</span>`;
-
     const actions = document.createElement('div');
     actions.className = 'pActions';
-
     const openBtn = document.createElement('button');
     openBtn.className = 'bBtn';
     openBtn.type = 'button';
@@ -1628,7 +1498,6 @@ function buildModernProjects(){
       termRun(`open ${key || title.toLowerCase()}`);
       toast(`Open is coming soon for ${title}`);
     });
-
     const demoBtn = document.createElement('button');
     demoBtn.className = 'bBtn bGhost';
     demoBtn.type = 'button';
@@ -1637,23 +1506,18 @@ function buildModernProjects(){
       termRun(`demo ${key || title.toLowerCase()}`);
       toast(`Demo is preview-only for ${title}`);
     });
-
     actions.appendChild(openBtn);
     actions.appendChild(demoBtn);
-
     wrap.appendChild(media);
     wrap.appendChild(top);
     wrap.appendChild(p);
     wrap.appendChild(meta);
     wrap.appendChild(actions);
-
     grid.appendChild(wrap);
   });
-
   const y = document.getElementById('bYear');
   if(y) y.textContent = new Date().getFullYear();
 }
-
 function bindModernButtons(){
   const root = document.getElementById('boringSite');
   if(!root) return;
@@ -1664,77 +1528,60 @@ function bindModernButtons(){
     });
   });
 }
-
 /* ===== Theme switching ===== */
 function setTheme(name){
   const t = themes[name];
   if(!t) return false;
-
   const boring = (name === 'boring');
   document.body.classList.toggle('mode-boring', boring);
-
   const bs = document.getElementById('boringSite');
   const ts = document.getElementById('terminalSite');
   if(bs) bs.setAttribute('aria-hidden', boring ? 'false' : 'true');
   if(ts) ts.setAttribute('aria-hidden', boring ? 'true' : 'false');
-
   document.body.dataset.mode = t.mode || "terminal";
-
   // palette
   if(t.bg)  document.documentElement.style.setProperty('--bg', t.bg);
   if(t.bg2) document.documentElement.style.setProperty('--bg2', t.bg2);
   if(t.panel) document.documentElement.style.setProperty('--panel', t.panel);
   if(t.text) document.documentElement.style.setProperty('--text', t.text);
   if(t.muted) document.documentElement.style.setProperty('--muted', t.muted);
-
   // accents + borders
   if(t.accent)  document.documentElement.style.setProperty('--accent', t.accent);
   if(t.accent2) document.documentElement.style.setProperty('--accent2', t.accent2);
   if(t.borderSoft)   document.documentElement.style.setProperty('--border-soft', t.borderSoft);
   if(t.borderAccent) document.documentElement.style.setProperty('--border-accent', t.borderAccent);
-
   // typography
   if(t.fontMain) document.documentElement.style.setProperty('--font-main', t.fontMain);
   if(t.letter)   document.documentElement.style.setProperty('--letter', t.letter);
-
   // build boring-mode content on demand
   if(boring){
     buildModernProjects();
     bindModernButtons();
   }
-
   return true;
 }
-
 /* ===== Command handler ===== */
 function openApp(key, kind="open"){
   const a = APPS[key];
   if(!a) return false;
-
   const name = a.name.toLowerCase();
   termPrint(`${kind === "demo" ? "demo" : "launching"} ${name}...`, "m");
   setTimeout(()=>{
     termPrint("status: preview-only (launch disabled)", "m");
     termPrint("hint: wiring opens later", "m");
   }, 240);
-
   return true;
 }
-
 function termRun(raw){
   const input = (raw ?? termInput?.value ?? "").trim();
   if(!input) return;
-
   hist.push(input);
   histIdx = hist.length;
-
   // echo only when user typed in terminal (not when buttons call it)
   if(raw === undefined) termEcho(input);
-
   const parts = input.split(/\s+/);
   const cmd = (parts[0] || "").toLowerCase();
   const arg1 = (parts[1] || "").toLowerCase();
-
   switch(cmd){
     case "help":
       termDivider();
@@ -1747,7 +1594,6 @@ function termRun(raw){
       termPrint("  theme <green|blue|amber|boring> (boring = full site transform)", "m");
       termPrint("  clear                          (wipe terminal)", "m");
       break;
-
     case "list":
       termDivider();
       termPrint("apps:", "m");
@@ -1755,12 +1601,10 @@ function termRun(raw){
         termPrint(`  ${k.padEnd(10)} ${a.tag.padEnd(6)}  open ${k} | demo ${k}`, "m");
       });
       break;
-
     case "open":
       if(!arg1){ termPrint("usage: open <orby|cube|notecenter|wordbeat|hophop>", "err"); break; }
       if(!openApp(arg1, "open")) termPrint(`unknown app: ${arg1}`, "err");
       break;
-
     case "demo":
       if(!arg1){ termPrint("usage: demo <orby|cube|notecenter|wordbeat|hophop>", "err"); break; }
       if(APPS[arg1]){
@@ -1772,40 +1616,32 @@ function termRun(raw){
         termPrint(`unknown app: ${arg1}`, "err");
       }
       break;
-
     case "ping":
       pulseSphere();
       termPrint("ping sent.", "m");
       break;
-
     case "about":
       document.getElementById('about')?.scrollIntoView({behavior:'smooth'});
       termPrint("jumping to about…", "m");
       break;
-
     case "contact":
       document.getElementById('contact')?.scrollIntoView({behavior:'smooth'});
       termPrint("jumping to contact…", "m");
       break;
-
     case "theme":
       if(!arg1){ termPrint("usage: theme <green|blue|amber|boring>", "err"); break; }
       if(setTheme(arg1)) termPrint(`theme set: ${arg1}`, "m");
       else termPrint(`unknown theme: ${arg1}`, "err");
       break;
-
     case "clear":
       if(termOut) termOut.innerHTML = "";
       break;
-
     default:
       termPrint(`unknown command: ${cmd}  (try: help)`, "err");
   }
-
   if(termInput && raw === undefined) termInput.value = "";
   if(termOut) termOut.scrollTop = termOut.scrollHeight;
 }
-
 /* ===== Init ===== */
 (function init(){
   // terminal banner
@@ -1815,7 +1651,6 @@ function termRun(raw){
   }
   // default theme
   setTheme("green");
-
   // chips
   document.querySelectorAll('[data-cmd]').forEach((btn)=>{
     btn.addEventListener('click', ()=>{
@@ -1823,22 +1658,17 @@ function termRun(raw){
       if(cmd.trim()) termRun(cmd);
     });
   });
-
   // click-to-focus
   document.getElementById('terminal')?.addEventListener('click', ()=> termInput?.focus());
-
   // keyboard controls: enter/↑/↓/tab
   window.addEventListener('keydown', (e)=>{
     if(!termInput) return;
-
     if((e.key === 't' || e.key === 'T') && (e.ctrlKey || e.metaKey)){
       e.preventDefault();
       termInput.focus();
       return;
     }
-
     if(document.activeElement !== termInput) return;
-
     if(e.key === 'Enter'){
       e.preventDefault();
       termRun();
