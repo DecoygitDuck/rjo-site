@@ -4020,19 +4020,10 @@ requestAnimationFrame(loop);
     if (subtitleEl) subtitleEl.innerHTML = html;
   }
 
-  // Best-effort: start the ethereal intro bed immediately for the start screen.
-  // (Browsers may keep AudioContext suspended until a user gesture; once unlocked, it will be audible.)
-  try{ ensureAC(); }catch(e){}
-  try{ startIntroEthereal(false); }catch(e){}
-  setSubtitle('Welcome. Soundtrack is on. Press <span class="keycap">Enter</span> to start.');
+  // Audio context will be created when the game starts
+  // (Background music on start screen has been removed)
 
 
-  function armIntro(){
-    // Unlock audio + start the intro bed (without starting gameplay)
-    try{ ensureAC(); }catch(e){}
-    try{ startIntroEthereal(); }catch(e){}
-    setSubtitle('Welcome. Soundtrack is on. Press <span class="keycap">Enter</span> to start.');
-  }
 
   function begin(){
     if (begun) return;
@@ -4052,8 +4043,7 @@ requestAnimationFrame(loop);
     setTimeout(()=>{ try{ start.remove(); }catch(e){} }, 280);
   }
 
-  // Any first interaction (click/tap/any key) should enable the soundtrack.
-  // Enter specifically starts the game (and stops the soundtrack).
+  // Enter starts the game
   addEventListener("keydown", (e)=>{
     if (begun) return;
 
@@ -4068,14 +4058,6 @@ requestAnimationFrame(loop);
       return;
     }
 
-    if (!(__intro && __intro.running)){
-      armIntro();
-    }
-  }, { capture:true });
-
-  addEventListener("pointerdown", ()=>{
-    if (begun) return;
-    if (!(__intro && __intro.running)) armIntro();
   }, { capture:true });
 
   if (startBtn){
@@ -4085,8 +4067,8 @@ requestAnimationFrame(loop);
     });
   }
 
-  // Initial hint (no audio until a gesture due to autoplay policies)
-  setSubtitle('Press <span class="keycap">Enter</span> to start. (Audio unlocks on first tap/click/key.)');
+  // Initial hint
+  setSubtitle('Press <span class="keycap">Enter</span> to start.');
 })();
 
 </script>
