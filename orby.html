@@ -2754,15 +2754,21 @@ let started = false;
 
 function startExperience(){
   if (started) return;
-  started = true;
 
-  // Center Orby at start (so it doesn't begin on the left)
+  // Center Orby BEFORE setting started=true (prevents ghost orb at old position)
   try{
     player.x = W * 0.5;
     player.y = H * 0.5;
     player.dx = 0; player.dy = 0;
     player.vx = 0; player.vy = 0;
   }catch(_){ }
+
+  // Clear trail buffer to prevent any ghost images
+  try{
+    trailCtx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
+  }catch(_){ }
+
+  started = true;
 
 // Fade out start screen
   if (startScreen){
