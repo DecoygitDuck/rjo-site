@@ -3844,6 +3844,9 @@ function loop(now){
   }
 
   // Phase 2: Enhanced orb visual based on position and active layers
+  // Don't draw the orb until the game has started (prevents duplicate orb bug)
+  if (!started) return;
+
   const zoneY = getVerticalZone(player.y, H);
   const speedFactor = Math.min(1, speedNow / 150);
 
