@@ -1569,169 +1569,11 @@ function playStartBlip(){
 }
 
 
-/* --- START SCREEN ETHEREAL INTRO (generative, stops on Start) --- */
-let __intro = { running:false, nodes:[], timers:[], stop:null };
-
-function startIntroEthereal(force=false){
-  try{
-    ensureAC();
-    if (!AC) return;
-    // Default: only play while start screen exists.
-    // If force=true (e.g., replay trigger), allow it even after start screen is gone.
-    if (!force && !document.getElementById("startScreen")) return;
-    if (__intro.running) return;
-
-    // Respect autoplay: caller should be from a user gesture, but we also resume safely.
-    if (AC.state === "suspended") AC.resume();
-
-    __intro.running = true;
-
-    const t0 = AC.currentTime;
-
-    // A dedicated intro bus so we can fade cleanly without touching game mix.
-    const introBus = AC.createGain();
-    // Keep this clearly audible (intro runs through masterGain (0.42) + masterFilter).
-    // Prior levels were too quiet on many speakers.
-    introBus.gain.setValueAtTime(0.0001, t0);
-    introBus.gain.exponentialRampToValueAtTime(0.55, t0 + 0.45); // gentle fade in
-    introBus.connect(masterFilter); // stays under master filter for cohesion
-    __intro.nodes.push(introBus);
-
-    // Soft shimmer: two detuned sines through a mellow filter
-    const shFilter = AC.createBiquadFilter();
-    shFilter.type = "lowpass";
-    shFilter.frequency.setValueAtTime(2400, t0);
-    shFilter.Q.setValueAtTime(0.7, t0);
-    shFilter.connect(introBus);
-    __intro.nodes.push(shFilter);
-
-    function mkOsc(type, freq, detune){
-      const o = AC.createOscillator();
-      const g = AC.createGain();
-      o.type = type;
-      o.frequency.setValueAtTime(freq, t0);
-      o.detune.setValueAtTime(detune, t0);
-      g.gain.setValueAtTime(0.0001, t0);
-      g.gain.exponentialRampToValueAtTime(0.15, t0 + 0.35);
-      o.connect(g).connect(shFilter);
-      o.start(t0);
-      __intro.nodes.push(o, g);
-      return {o,g};
-    }
-    const a = mkOsc("sine", 220, -7);
-    const b = mkOsc("sine", 220, +7);
-
-    // Slow drift (LFO) for shimmer movement
-    const lfo = AC.createOscillator();
-    const lfoG = AC.createGain();
-    lfo.type = "sine";
-    lfo.frequency.setValueAtTime(0.08, t0);
-    lfoG.gain.setValueAtTime(35, t0);
-    lfo.connect(lfoG);
-    lfoG.connect(a.o.detune);
-    lfoG.connect(b.o.detune);
-    lfo.start(t0);
-    __intro.nodes.push(lfo, lfoG);
-
-    // Breath noise bed (very quiet): filtered noise
-    const noiseBuf = AC.createBuffer(1, AC.sampleRate * 2, AC.sampleRate);
-    const data = noiseBuf.getChannelData(0);
-    for (let i=0;i<data.length;i++) data[i] = (Math.random()*2-1) * 0.35;
-
-    const noise = AC.createBufferSource();
-    noise.buffer = noiseBuf;
-    noise.loop = true;
-
-    const nFilter = AC.createBiquadFilter();
-    nFilter.type = "bandpass";
-    nFilter.frequency.setValueAtTime(520, t0);
-    nFilter.Q.setValueAtTime(0.8, t0);
-
-    const nGain = AC.createGain();
-    nGain.gain.setValueAtTime(0.0001, t0);
-    nGain.gain.exponentialRampToValueAtTime(0.06, t0 + 0.6);
-
-    noise.connect(nFilter).connect(nGain).connect(introBus);
-    noise.start(t0);
-    __intro.nodes.push(noise, nFilter, nGain);
-
-    // Generative “note cloud”: slow chord-tone wandering (scale-locked vibe)
-    const scale = [0, 2, 3, 5, 7, 10]; // minor-ish color (safe)
-    let step = 0;
-
-    function pickNote(){
-      const base = 196; // G3-ish
-      const deg = scale[(Math.random()*scale.length)|0];
-      const oct = (Math.random()<0.35) ? 12 : 0;
-      const semi = deg + oct;
-      return base * Math.pow(2, semi/12);
-    }
-
-    const cloud = AC.createOscillator();
-    const cloudG = AC.createGain();
-    const cloudF = AC.createBiquadFilter();
-    cloud.type = "triangle";
-    cloud.frequency.setValueAtTime(pickNote(), t0);
-    cloudG.gain.setValueAtTime(0.0001, t0);
-    cloudG.gain.exponentialRampToValueAtTime(0.09, t0 + 0.5);
-    cloudF.type = "lowpass";
-    cloudF.frequency.setValueAtTime(1800, t0);
-    cloudF.Q.setValueAtTime(0.9, t0);
-
-    cloud.connect(cloudF).connect(cloudG).connect(introBus);
-    cloud.start(t0);
-    __intro.nodes.push(cloud, cloudG, cloudF);
-
-    const tempo = ()=> Math.max(40, Math.min(140, bpm || 96));
-    const tickMs = ()=> (60000 / tempo()) * 2; // every 2 beats (slow)
-
-    const timer = setInterval(()=>{
-      if (!__intro.running) return;
-      if (!force && !document.getElementById("startScreen")) return;
-      const t = AC.currentTime;
-      // glide to next note
-      const f = pickNote();
-      cloud.frequency.cancelScheduledValues(t);
-      cloud.frequency.setTargetAtTime(f, t, 0.08);
-
-      // subtle shimmer filter breathing
-      const nf = 2000 + 700*Math.sin(step*0.7);
-      shFilter.frequency.setTargetAtTime(nf, t, 0.12);
-      nFilter.frequency.setTargetAtTime(420 + 180*Math.sin(step*0.55), t, 0.18);
-      step++;
-    }, tickMs());
-    __intro.timers.push(timer);
-
-    __intro.stop = function stopIntroEthereal(){
-      if (!__intro.running) return;
-      __intro.running = false;
-      try{
-        const t = AC.currentTime;
-        // Fade out bus + layers
-        introBus.gain.cancelScheduledValues(t);
-        introBus.gain.setValueAtTime(Math.max(0.0001, introBus.gain.value), t);
-        introBus.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
-        // Stop oscillators after fade
-        setTimeout(()=>{
-          try{ cloud.stop(); }catch(e){}
-          try{ a.o.stop(); }catch(e){}
-          try{ b.o.stop(); }catch(e){}
-          try{ lfo.stop(); }catch(e){}
-          try{ noise.stop(); }catch(e){}
-        }, 420);
-      }catch(e){}
-      // Clear timers
-      for (const tm of __intro.timers){ try{ clearInterval(tm); }catch(e){} }
-      __intro.timers = [];
-    };
-  }catch(e){
-    console.error(e);
-  }
-}
-
-function stopIntroEthereal(){
-  try{ if (__intro.stop) __intro.stop(); }catch(e){}
-}
+/* --- ETHEREAL INTRO REMOVED --- */
+// Stub functions to prevent errors if called elsewhere
+let __intro = { running: false };
+function startIntroEthereal(){}
+function stopIntroEthereal(){}
 
 function ensureAC(){
   if (!AC){
@@ -3314,17 +3156,11 @@ document.addEventListener("keydown", (e)=>{
 
   ensureAC(); hideOverlay();
 
-  // Enter = intro soundtrack toggle during gameplay (play/pause without touching the start screen)
-  if ((e.key === "Enter" || e.key === "0") && !e.repeat){
+  // 0 = visual anchor pulse (breath/silence mode trigger)
+  if (e.key === "0" && !e.repeat){
     e.preventDefault();
 
-    // 0 = OFF ONLY (force stop) + visual anchor pulse
-  if (e.key === "0"){
-    if (__intro && __intro.running){
-      stopIntroEthereal();
-    }
-
-    // restore anchor visuals (no audio toggle)
+    // restore anchor visuals
     if (typeof triggerFieldPulse === "function"){
       triggerFieldPulse();
     }
@@ -3332,15 +3168,6 @@ document.addEventListener("keydown", (e)=>{
       pulseSphere(1.0);
     }
 
-    return;
-  }
-
-    // Enter = toggle on/off
-    if (__intro && __intro.running){
-      stopIntroEthereal();
-    }else{
-      startIntroEthereal(true);
-    }
     return;
   }
 
@@ -4018,52 +3845,30 @@ requestAnimationFrame(loop);
   const start = document.getElementById("startScreen");
   if (!start) return;
 
-  const subtitleEl = start.querySelector(".startSubtitle");
   const startBtn = document.getElementById("startBtn");
-
   let begun = false;
-  function setSubtitle(html){
-    if (subtitleEl) subtitleEl.innerHTML = html;
-  }
-
-  // Best-effort: start the ethereal intro bed immediately for the start screen.
-  // (Browsers may keep AudioContext suspended until a user gesture; once unlocked, it will be audible.)
-  try{ ensureAC(); }catch(e){}
-  try{ startIntroEthereal(false); }catch(e){}
-  setSubtitle('Welcome. Soundtrack is on. Press <span class="keycap">Enter</span> to start.');
-
-
-  function armIntro(){
-    // Unlock audio + start the intro bed (without starting gameplay)
-    try{ ensureAC(); }catch(e){}
-    try{ startIntroEthereal(); }catch(e){}
-    setSubtitle('Welcome. Soundtrack is on. Press <span class="keycap">Enter</span> to start.');
-  }
 
   function begin(){
     if (begun) return;
     begun = true;
 
-    // Stop start-screen intro (if playing)
-    stopIntroEthereal();
+    // Play start blip sound
+    try{ playStartBlip(); }catch(e){}
 
-    // Unlock + play start blip on the same gesture
-    playStartBlip();
-
-    // Start the actual experience (hooks into existing game loop + input)
+    // Start the actual experience
     try{ startExperience(); }catch(e){ console.error(e); }
 
+    // Fade out and remove start screen
     start.style.opacity = "0";
     start.style.pointerEvents = "none";
     setTimeout(()=>{ try{ start.remove(); }catch(e){} }, 280);
   }
 
-  // Any first interaction (click/tap/any key) should enable the soundtrack.
-  // Enter specifically starts the game (and stops the soundtrack).
+  // Enter key starts the game
   addEventListener("keydown", (e)=>{
     if (begun) return;
 
-    // Prevent page scroll / accidental browser actions while start screen is up.
+    // Prevent page scroll while start screen is up
     if (e.key === " " || e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "ArrowLeft" || e.key === "ArrowRight"){
       e.preventDefault();
     }
@@ -4071,28 +3876,16 @@ requestAnimationFrame(loop);
     if (e.key === "Enter"){
       e.preventDefault();
       begin();
-      return;
-    }
-
-    if (!(__intro && __intro.running)){
-      armIntro();
     }
   }, { capture:true });
 
-  addEventListener("pointerdown", ()=>{
-    if (begun) return;
-    if (!(__intro && __intro.running)) armIntro();
-  }, { capture:true });
-
+  // Start button click
   if (startBtn){
     startBtn.addEventListener("click", (e)=>{
       e.preventDefault();
       begin();
     });
   }
-
-  // Initial hint (no audio until a gesture due to autoplay policies)
-  setSubtitle('Press <span class="keycap">Enter</span> to start. (Audio unlocks on first tap/click/key.)');
 })();
 
 </script>
