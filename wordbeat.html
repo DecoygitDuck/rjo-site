@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LYRICFIELD — Loop</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  html,body{
+    margin:0; padding:0; height:100%;
+    background:#08080d; color:#eaeaea;
+    font-family:system-ui,monospace;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .wrap{ width:92%; max-width:820px; text-align:center; }
+  h1{ letter-spacing:.15em; font-weight:650; margin:0 0 8px; }
+  .hint{ opacity:.6; margin:0 0 14px; }
+  textarea{
+    width:100%; height:180px;
+    background:#111118; color:#fff;
+    border:1px solid #222;
+    padding:14px; font-size:17px; resize:none; outline:none;
+  }
+  .row{
+    display:flex; gap:10px; justify-content:space-between; align-items:center;
+    margin-top:10px; flex-wrap:wrap;
+    opacity:.75; font-size:13px;
+  }
+  .pill{
+    padding:6px 10px; border:1px solid #232334; border-radius:999px;
+    background:rgba(255,255,255,.03);
+  }
+  .status{ opacity:.85; }
+  .seed{ opacity:.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>LYRICFIELD</h1>
+  <p class="hint">SPACE = unlock audio · ENTER = start/stop loop · type lyrics to reshape the song</p>
+  <textarea id="lyrics" placeholder="type lyrics here...&#10;&#10;Tip: the same text always makes the same loop."></textarea>
+  <div class="row">
+    <span class="pill status" id="status">audio locked · loop stopped</span>
+    <span class="pill">bpm: <span id="bpm">92</span></span>
+    <span class="pill seed" id="seed">seed: —</span>
+  </div>
+</div>
+
+<script>
+/* ===== Seed + RNG ===== */
+function hashSeed(str){
+  // FNV-1a-ish
+  let h = 2166136261 >>> 0;
+  for (let i=0;i<str.length;i++){
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+function makeRng(seed){
+  let s = seed >>> 0;
+  return function(){
+    s = (Math.imul(1664525, s) + 1013904223) >>> 0;
+    return s / 4294967296;
+  }
+}
+
+/* ===== Audio (gesture-gated) ===== */
+let ctx = null;
+let started = false;
+
+/* soft master */
+let master = null;
+let hp = null;
+
+function ensureAudio(){
+  if (started) return true;
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  master = ctx.createGain();
+  master.gain.value = 0.85;
+  hp = ctx.createBiquadFilter();
+  hp.type = "highpass";
+  hp.frequency.value = 18;
+  hp.connect(master).connect(ctx.destination);
+  started = true;
+  return true;
+}
+
+/* ===== Instruments ===== */
+function kick(t, seedRand){
+  // sine pitch drop + click
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = "sine";
+  const base = 110 + seedRand()*30;
+  o.frequency.setValueAtTime(base, t);
+  o.frequency.exponentialRampToValueAtTime(50, t + 0.13);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.9, t + 0.004);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+  o.connect(g).connect(hp);
+  o.start(t);
+  o.stop(t + 0.25);
+}
+
+function snare(t, seedRand){
+  // short noise burst + tone
+  const dur = 0.16;
+  const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate*dur), ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for(let i=0;i<data.length;i++){
+    const env = 1 - (i / data.length);
+    data[i] = (Math.random()*2-1) * env * env;
+  }
+  const n = ctx.createBufferSource();
+  n.buffer = buf;
+  const ng = ctx.createGain();
+  ng.gain.setValueAtTime(0.0001, t);
+  ng.gain.exponentialRampToValueAtTime(0.35, t + 0.002);
+  ng.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+
+  const o = ctx.createOscillator();
+  o.type = "triangle";
+  o.frequency.setValueAtTime(160 + seedRand()*60, t);
+  const og = ctx.createGain();
+  og.gain.setValueAtTime(0.0001, t);
+  og.gain.exponentialRampToValueAtTime(0.12, t + 0.004);
+  og.gain.exponentialRampToValueAtTime(0.0001, t + 0.10);
+
+  n.connect(ng).connect(hp);
+  o.connect(og).connect(hp);
+  n.start(t); n.stop(t + dur);
+  o.start(t); o.stop(t + 0.12);
+}
+
+function hat(t, seedRand){
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = "square";
+  o.frequency.setValueAtTime(6500 + seedRand()*2200, t);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.10, t + 0.0015);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+  o.connect(g).connect(hp);
+  o.start(t); o.stop(t + 0.06);
+}
+
+function pluck(t, freq, seedRand){
+  // tiny pluck: triangle + lowpass sweep
+  const o = ctx.createOscillator();
+  o.type = "triangle";
+  o.frequency.setValueAtTime(freq, t);
+
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.22, t + 0.004);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+
+  const lp = ctx.createBiquadFilter();
+  lp.type = "lowpass";
+  lp.frequency.setValueAtTime(900 + seedRand()*600, t);
+  lp.frequency.exponentialRampToValueAtTime(280, t + 0.22);
+
+  o.connect(lp).connect(g).connect(hp);
+  o.start(t); o.stop(t + 0.25);
+}
+
+/* ===== Pattern generator (seeded by text) ===== */
+const scale = [0,2,3,5,7,10,12]; // pretty minor-ish
+function buildPattern(text){
+  const seed = hashSeed(text || " ");
+  const rand = makeRng(seed);
+  const bpm = 82 + Math.floor(rand()*26); // 82-107
+  const root = 110 + Math.floor(rand()*70); // A2-ish up
+  const steps = 32; // 2 bars of 16th notes
+
+  const p = {
+    seed, bpm, root,
+    kick: new Array(steps).fill(false),
+    snare: new Array(steps).fill(false),
+    hat: new Array(steps).fill(false),
+    mel: new Array(steps).fill(null)
+  };
+
+  // base groove (stable hip-hop-ish)
+  p.kick[0]=true; p.kick[8]=true; 
+  if (rand() < 0.65) p.kick[12]=true;
+  p.snare[8]=true; p.snare[24]=true;
+  for(let i=0;i<steps;i++){
+    if(i%2===0) p.hat[i]=true;
+  }
+  // sprinkle extra hats
+  for(let i=0;i<steps;i++){
+    if(rand()<0.12) p.hat[i]=true;
+  }
+
+  // map text → events
+  // vowels favor melody placements, consonants favor rhythm accents
+  const letters = (text || "").toLowerCase();
+  let idx = 0;
+  for (let c of letters){
+    if(c === "\n") continue;
+    const at = (idx * 3 + Math.floor(rand()*5)) % steps;
+    if("aeiou".includes(c)){
+      const deg = scale[Math.floor(rand()*scale.length)];
+      const oct = (rand()<0.75) ? 0 : 12;
+      const f = p.root * Math.pow(2,(deg+oct)/12);
+      p.mel[at] = f;
+      // a vowel can also open a hat fill
+      if(rand()<0.35) p.hat[(at+1)%steps] = true;
+    } else if(c === " "){
+      p.kick[at] = true;
+    } else if(c >= "a" && c <= "z"){
+      if(rand()<0.45) p.snare[at] = true;
+      if(rand()<0.25) p.kick[at] = true;
+    } else {
+      // punctuation adds tiny fills
+      if(rand()<0.35) p.hat[at] = true;
+      if(rand()<0.15) p.snare[at] = true;
+    }
+    idx++;
+  }
+
+  // ensure musical breathing: reduce melody density
+  for(let i=0;i<steps;i++){
+    if(p.mel[i] && rand()<0.35) p.mel[i]=null;
+  }
+
+  return p;
+}
+
+/* ===== Loop Scheduler ===== */
+let playing = false;
+let currentPattern = null;
+let step = 0;
+
+let nextNoteTime = 0;
+const scheduleAheadTime = 0.12;
+let timerID = null;
+
+function secondsPerStep(bpm){
+  // 16th notes
+  return (60 / bpm) / 4;
+}
+
+function scheduleStep(s, t, pattern){
+  const seedRand = makeRng(pattern.seed ^ (s*2654435761 >>> 0));
+  if(pattern.kick[s]) kick(t, seedRand);
+  if(pattern.snare[s]) snare(t, seedRand);
+  if(pattern.hat[s]) hat(t, seedRand);
+  if(pattern.mel[s]) pluck(t, pattern.mel[s], seedRand);
+}
+
+function scheduler(){
+  if(!playing) return;
+  const sp = secondsPerStep(currentPattern.bpm);
+  while(nextNoteTime < ctx.currentTime + scheduleAheadTime){
+    scheduleStep(step, nextNoteTime, currentPattern);
+    nextNoteTime += sp;
+    step = (step + 1) % 32;
+    // refresh pattern at bar boundary to reflect live typing
+    if(step === 0){
+      const txt = document.getElementById("lyrics").value;
+      currentPattern = buildPattern(txt);
+      updateHUD();
+    }
+  }
+}
+
+function startLoop(){
+  const txt = document.getElementById("lyrics").value;
+  currentPattern = buildPattern(txt);
+  step = 0;
+  nextNoteTime = ctx.currentTime + 0.05;
+  playing = true;
+  updateHUD();
+  if(timerID) clearInterval(timerID);
+  timerID = setInterval(scheduler, 25);
+}
+
+function stopLoop(){
+  playing = false;
+  updateHUD();
+  if(timerID){ clearInterval(timerID); timerID = null; }
+}
+
+/* ===== HUD ===== */
+function updateHUD(){
+  const s = document.getElementById("status");
+  const bpmEl = document.getElementById("bpm");
+  const seedEl = document.getElementById("seed");
+  if(!started){
+    s.textContent = "audio locked · loop stopped";
+    bpmEl.textContent = "—";
+    seedEl.textContent = "seed: —";
+    return;
+  }
+  if(currentPattern){
+    bpmEl.textContent = currentPattern.bpm;
+    seedEl.textContent = "seed: " + currentPattern.seed;
+  }
+  s.textContent = playing ? "audio running · loop playing (ENTER to stop)" : "audio running · loop stopped (ENTER to play)";
+}
+
+/* ===== Controls ===== */
+document.addEventListener("keydown", (e)=>{
+  if(e.code === "Space" && !started){
+    ensureAudio();
+    updateHUD();
+    e.preventDefault();
+    return;
+  }
+
+  // ENTER toggles beat-maker loop
+  if(e.code === "Enter"){
+    if(!started) ensureAudio();
+    if(!playing) startLoop(); else stopLoop();
+    e.preventDefault();
+    return;
+  }
+
+  // live typing reshapes the song immediately (pattern updates on next bar)
+  if(!started) return;
+
+  // small immediate "instrument feel" while typing (optional, minimal)
+  // (we only do a tiny hat tick on keystrokes so it feels responsive without fighting the loop)
+  if(playing && e.key && e.key.length === 1){
+    const seedNow = hashSeed(document.getElementById("lyrics").value || " ");
+    const seedRand = makeRng(seedNow ^ 0x9e3779b9);
+    hat(ctx.currentTime + 0.002, seedRand);
+  }
+});
+
+// focus typing
+document.getElementById("lyrics").focus();
+
+updateHUD();
+</script>
+</body>
+</html>

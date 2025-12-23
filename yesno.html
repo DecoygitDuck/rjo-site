@@ -1,0 +1,849 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Yes/No Day</title>
+  <meta name="description" content="A cute yes/no calendar: YES days you do things, NO days you refuse." />
+  <style>
+    :root{
+      --bg0:#fbf7ff;
+      --bg1:#f6fbff;
+      --card:#ffffffcc;
+      --ink:#1d1b22;
+      --muted:#5b5566;
+      --line:#e9e2f2;
+      --shadow: 0 18px 45px rgba(22, 12, 42, .12);
+      --shadow2: 0 10px 25px rgba(22, 12, 42, .10);
+
+      --yes:#ffb3c7;   /* warm */
+      --yes2:#ffd5a6;  /* warm accent */
+      --no:#b7d9ff;    /* calm */
+      --no2:#c9f2e0;   /* calm accent */
+      --unset:#e9e2f2;
+
+      --radius: 22px;
+      --radius2: 16px;
+
+      --font: ui-rounded, system-ui, -apple-system, "SF Pro Rounded",
+              "Segoe UI Variable", "Segoe UI", Roboto, Arial, sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    }
+
+    /* soft indie background (no assets) */
+    html, body{
+      height:100%;
+      margin:0;
+      font-family: var(--font);
+      color: var(--ink);
+      background:
+        radial-gradient(1400px 700px at 20% 15%, var(--bg1), transparent 70%),
+        radial-gradient(1200px 900px at 80% 25%, var(--bg0), transparent 65%),
+        linear-gradient(135deg, #ffffff, #f7f3ff);
+      overflow-x:hidden;
+    }
+
+    /* subtle paper/noise illusion (pure CSS) */
+    body::before{
+      content:"";
+      position:fixed;
+      inset:-2px;
+      pointer-events:none;
+      background:
+        radial-gradient(circle at 10% 20%, rgba(0,0,0,.03), transparent 35%),
+        radial-gradient(circle at 90% 60%, rgba(0,0,0,.025), transparent 40%),
+        radial-gradient(circle at 40% 90%, rgba(0,0,0,.02), transparent 45%);
+      mix-blend-mode:multiply;
+      opacity:.35;
+      filter: blur(.3px);
+    }
+
+    .wrap{
+      max-width: 1050px;
+      margin: 0 auto;
+      padding: 28px 18px 90px;
+      position:relative;
+    }
+
+    header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:14px;
+      margin-bottom: 16px;
+    }
+
+    .brand{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .title{
+      font-size: clamp(22px, 3vw, 30px);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .badge{
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #ffffffaa;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      box-shadow: 0 6px 18px rgba(0,0,0,.06);
+    }
+    .sub{
+      color: var(--muted);
+      font-size: 14px;
+      line-height:1.35;
+      max-width: 560px;
+    }
+
+    .panel{
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      overflow:hidden;
+    }
+
+    .toolbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding: 14px 14px 10px;
+    }
+
+    .monthNav{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width: 270px;
+    }
+
+    .monthLabel{
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      padding: 8px 10px;
+      border-radius: 14px;
+      background: #ffffffa8;
+      border: 1px solid var(--line);
+      box-shadow: 0 8px 20px rgba(0,0,0,.06);
+      user-select:none;
+    }
+
+    button{
+      font-family: var(--font);
+    }
+
+    .btn{
+      appearance:none;
+      border: 1px solid var(--line);
+      background:#ffffffb8;
+      color: var(--ink);
+      padding: 10px 12px;
+      border-radius: 14px;
+      cursor:pointer;
+      box-shadow: 0 10px 22px rgba(0,0,0,.06);
+      transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      user-select:none;
+    }
+    .btn:hover{ transform: translateY(-1px); box-shadow: 0 14px 26px rgba(0,0,0,.08); }
+    .btn:active{ transform: translateY(0); box-shadow: 0 10px 22px rgba(0,0,0,.06); }
+    .btn:focus-visible{ outline: 3px solid rgba(120, 80, 255, .25); outline-offset: 2px; }
+
+    .btn.small{ padding: 8px 10px; border-radius: 12px; font-size: 13px; }
+    .btn.ghost{ background: transparent; box-shadow:none; }
+    .btn.ghost:hover{ background:#ffffffa8; }
+
+    .hint{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      color: var(--muted);
+      font-size: 13px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      text-align:right;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding: 6px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:#ffffffa8;
+    }
+    .key{
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 8px;
+      background:#f2eef8;
+      border:1px solid #e6def3;
+      color:#3a3150;
+    }
+
+    .weekdays{
+      display:grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+      padding: 0 14px 10px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .weekday{
+      padding: 6px 8px;
+      border-radius: 12px;
+      text-align:center;
+      background: #ffffff85;
+      border: 1px dashed #efe8f7;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+      padding: 0 14px 16px;
+    }
+
+    .day{
+      position:relative;
+      min-height: 92px;
+      border-radius: var(--radius2);
+      border: 1px solid var(--line);
+      background: #ffffffbf;
+      box-shadow: 0 10px 22px rgba(0,0,0,.05);
+      cursor:pointer;
+      transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+      overflow:hidden;
+    }
+    .day:hover{ transform: translateY(-1px); box-shadow: 0 14px 28px rgba(0,0,0,.07); }
+    .day:active{ transform: translateY(0); }
+    .day:focus-visible{ outline: 3px solid rgba(120, 80, 255, .25); outline-offset: 2px; }
+
+    .day.muted{
+      opacity:.48;
+      background:#ffffff8c;
+    }
+
+    .num{
+      position:absolute;
+      top: 10px;
+      left: 10px;
+      font-weight: 900;
+      font-size: 16px;
+      letter-spacing: -0.01em;
+      color: #241f2f;
+      user-select:none;
+    }
+
+    .stamp{
+      position:absolute;
+      right: 10px;
+      top: 10px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      border: 1px solid var(--line);
+      background: #ffffffc7;
+      color: var(--muted);
+      display:inline-flex;
+      align-items:center;
+      gap:7px;
+      user-select:none;
+      transform: rotate(-3deg);
+    }
+    .dot{
+      width: 10px;
+      height: 10px;
+      border-radius:999px;
+      background: var(--unset);
+      box-shadow: 0 6px 14px rgba(0,0,0,.08);
+    }
+
+    .day.yes .stamp{ background: linear-gradient(135deg, var(--yes), var(--yes2)); color:#3b1b28; border-color: rgba(255, 179, 199, .55); }
+    .day.yes .dot{ background: #ff5c8a; }
+    .day.no  .stamp{ background: linear-gradient(135deg, var(--no), var(--no2)); color:#12304e; border-color: rgba(183, 217, 255, .6); }
+    .day.no  .dot{ background: #2d7dff; }
+
+    /* stamp pop animation on update */
+    .stamp.pop{
+      animation: pop .22s ease-out;
+    }
+    @keyframes pop{
+      0%{ transform: rotate(-3deg) scale(.92); filter:saturate(.9); }
+      70%{ transform: rotate(-3deg) scale(1.06); filter:saturate(1.05); }
+      100%{ transform: rotate(-3deg) scale(1); }
+    }
+
+    .miniNote{
+      position:absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height:1.25;
+      display:-webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow:hidden;
+    }
+
+    /* drawer */
+    .drawerBackdrop{
+      position:fixed;
+      inset:0;
+      background: rgba(10, 8, 16, .18);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .16s ease;
+      z-index: 50;
+    }
+    .drawerBackdrop.open{
+      opacity:1;
+      pointer-events:auto;
+    }
+    .drawer{
+      position:fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: -420px;
+      width: min(860px, calc(100% - 22px));
+      background: #ffffffde;
+      border: 1px solid var(--line);
+      border-radius: 26px 26px 18px 18px;
+      box-shadow: var(--shadow);
+      transition: bottom .22s ease;
+      z-index: 60;
+      overflow:hidden;
+    }
+    .drawer.open{ bottom: 12px; }
+
+    .drawerTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      padding: 16px 16px 10px;
+      background:
+        radial-gradient(700px 220px at 20% 0%, #fff, transparent 70%),
+        radial-gradient(650px 240px at 80% 10%, #fff, transparent 70%),
+        linear-gradient(135deg, #ffffff, #fbf7ff);
+      border-bottom: 1px solid var(--line);
+    }
+    .drawerTitle{
+      font-weight: 900;
+      font-size: 18px;
+      letter-spacing: -0.01em;
+    }
+    .drawerSub{
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .drawerBody{
+      padding: 14px 16px 16px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .toggleRow{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .toggle{
+      flex: 1 1 140px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: #ffffffc9;
+      padding: 12px 12px;
+      cursor:pointer;
+      box-shadow: var(--shadow2);
+      transition: transform .12s ease, box-shadow .12s ease;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      min-height: 52px;
+    }
+    .toggle:hover{ transform: translateY(-1px); box-shadow: 0 14px 26px rgba(0,0,0,.08); }
+    .toggle:active{ transform: translateY(0); }
+
+    .toggle strong{
+      font-weight: 950;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      font-size: 12px;
+    }
+    .toggle span{
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .toggle.yes{
+      border-color: rgba(255, 179, 199, .55);
+      background: linear-gradient(135deg, rgba(255,179,199,.65), rgba(255,213,166,.55));
+    }
+    .toggle.no{
+      border-color: rgba(183, 217, 255, .65);
+      background: linear-gradient(135deg, rgba(183,217,255,.6), rgba(201,242,224,.55));
+    }
+    .toggle.unset{
+      border-style:dashed;
+      background: linear-gradient(135deg, rgba(233,226,242,.6), rgba(255,255,255,.65));
+    }
+
+    .noteBox{
+      border: 1px solid var(--line);
+      background: #ffffffc9;
+      border-radius: 18px;
+      padding: 12px 12px;
+      box-shadow: var(--shadow2);
+    }
+    .noteBox label{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    textarea{
+      width: 100%;
+      min-height: 64px;
+      max-height: 160px;
+      resize: vertical;
+      border-radius: 14px;
+      border: 1px solid #e9e2f2;
+      padding: 10px 10px;
+      font-family: var(--font);
+      font-size: 14px;
+      outline:none;
+      background: #fff;
+      box-sizing:border-box;
+    }
+    textarea:focus{ outline: 3px solid rgba(120, 80, 255, .22); border-color: rgba(120, 80, 255, .28); }
+
+    .footerRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      flex-wrap:wrap;
+      padding-top: 2px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .srOnly{
+      position:absolute !important;
+      width:1px;height:1px;
+      padding:0;margin:-1px;
+      overflow:hidden;clip:rect(0,0,0,0);
+      white-space:nowrap;border:0;
+    }
+
+    @media (max-width: 520px){
+      .day{ min-height: 82px; }
+      .stamp{ font-size: 11px; padding: 6px 9px; }
+      .monthNav{ min-width: auto; }
+      .hint{ justify-content:flex-start; text-align:left; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="title">
+          Yes/No Day
+          <span class="badge" id="todayBadge">today</span>
+        </div>
+        <div class="sub">
+          A tiny calendar where every day is either <b>YES</b> (you'll do things) or <b>NO</b> (you refuse).
+          Click a day to stamp it.
+        </div>
+      </div>
+      <div style="margin-top:12px;">
+        <a href="index.html" style="display:inline-flex;align-items:center;gap:6px;color:#8050ff;text-decoration:none;font-size:13px;font-weight:700;padding:8px 14px;border-radius:12px;border:1px solid rgba(128,80,255,.25);background:rgba(128,80,255,.05);transition:all .12s ease;" onmouseover="this.style.background='rgba(128,80,255,.12)'" onmouseout="this.style.background='rgba(128,80,255,.05)'">← Back to Lab</a>
+      </div>
+      <div class="hint" aria-label="shortcuts">
+        <span class="pill"><span class="key">Y</span> YES</span>
+        <span class="pill"><span class="key">N</span> NO</span>
+        <span class="pill"><span class="key">U</span> Unset</span>
+        <span class="pill"><span class="key">Esc</span> Close</span>
+      </div>
+    </header>
+
+    <section class="panel" aria-label="calendar panel">
+      <div class="toolbar">
+        <div class="monthNav">
+          <button class="btn small" id="prevBtn" aria-label="previous month">←</button>
+          <div class="monthLabel" id="monthLabel" aria-live="polite"></div>
+          <button class="btn small" id="nextBtn" aria-label="next month">→</button>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
+          <button class="btn small ghost" id="jumpTodayBtn">Today</button>
+          <button class="btn small" id="clearMonthBtn" title="Clear YES/NO stamps for this month (keeps notes)">Clear month</button>
+        </div>
+      </div>
+
+      <div class="weekdays" aria-hidden="true">
+        <div class="weekday">Sun</div><div class="weekday">Mon</div><div class="weekday">Tue</div>
+        <div class="weekday">Wed</div><div class="weekday">Thu</div><div class="weekday">Fri</div>
+        <div class="weekday">Sat</div>
+      </div>
+
+      <div class="grid" id="grid" role="grid" aria-label="month grid"></div>
+    </section>
+  </div>
+
+  <!-- Drawer -->
+  <div class="drawerBackdrop" id="backdrop" tabindex="-1" aria-hidden="true"></div>
+  <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+    <div class="drawerTop">
+      <div>
+        <div class="drawerTitle" id="drawerTitle">Day</div>
+        <div class="drawerSub" id="drawerSub">Stamp it YES or NO.</div>
+      </div>
+      <button class="btn small" id="closeDrawerBtn" aria-label="close">Close</button>
+    </div>
+    <div class="drawerBody">
+      <div class="toggleRow" aria-label="state toggles">
+        <button class="toggle yes" id="setYesBtn">
+          <div>
+            <strong>YES</strong><br><span>do things</span>
+          </div>
+          <span aria-hidden="true">✨</span>
+        </button>
+        <button class="toggle no" id="setNoBtn">
+          <div>
+            <strong>NO</strong><br><span>refuse</span>
+          </div>
+          <span aria-hidden="true">🫧</span>
+        </button>
+        <button class="toggle unset" id="setUnsetBtn">
+          <div>
+            <strong>UNSET</strong><br><span>blank</span>
+          </div>
+          <span aria-hidden="true">…</span>
+        </button>
+      </div>
+
+      <div class="noteBox">
+        <label for="noteInput">
+          tiny note (optional)
+          <span id="noteHint" class="srOnly">Saved automatically</span>
+        </label>
+        <textarea id="noteInput" maxlength="160" placeholder="ex: 'no meetings' or 'gym + errands'"></textarea>
+        <div class="footerRow">
+          <div id="stateLine">State: —</div>
+          <div><span class="key" id="charCount">0</span> / 160</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <script>
+    // ====== Yes/No Day (single-file, no deps) ======
+    // Data storage:
+    // - state: localStorage key "ynd:YYYY-MM-DD" value "YES" | "NO"
+    // - note:  localStorage key "yndnote:YYYY-MM-DD" value string
+    (() => {
+      const grid = document.getElementById('grid');
+      const monthLabel = document.getElementById('monthLabel');
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const jumpTodayBtn = document.getElementById('jumpTodayBtn');
+      const clearMonthBtn = document.getElementById('clearMonthBtn');
+
+      const backdrop = document.getElementById('backdrop');
+      const drawer = document.getElementById('drawer');
+      const closeDrawerBtn = document.getElementById('closeDrawerBtn');
+
+      const drawerTitle = document.getElementById('drawerTitle');
+      const drawerSub = document.getElementById('drawerSub');
+      const setYesBtn = document.getElementById('setYesBtn');
+      const setNoBtn = document.getElementById('setNoBtn');
+      const setUnsetBtn = document.getElementById('setUnsetBtn');
+
+      const noteInput = document.getElementById('noteInput');
+      const stateLine = document.getElementById('stateLine');
+      const charCount = document.getElementById('charCount');
+      const todayBadge = document.getElementById('todayBadge');
+
+      const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+      const pad2 = n => String(n).padStart(2,'0');
+      const fmtKey = (y,m,d) => `${y}-${pad2(m+1)}-${pad2(d)}`;
+      const stateKey = iso => `ynd:${iso}`;
+      const noteKey  = iso => `yndnote:${iso}`;
+
+      const getState = iso => localStorage.getItem(stateKey(iso)); // "YES" | "NO" | null
+      const setState = (iso, v) => {
+        if (!v) localStorage.removeItem(stateKey(iso));
+        else localStorage.setItem(stateKey(iso), v);
+      };
+      const getNote = iso => localStorage.getItem(noteKey(iso)) || "";
+      const setNote = (iso, txt) => {
+        const cleaned = (txt || "").trimEnd();
+        if (!cleaned) localStorage.removeItem(noteKey(iso));
+        else localStorage.setItem(noteKey(iso), cleaned);
+      };
+
+      // active view state
+      const now = new Date();
+      const todayISO = fmtKey(now.getFullYear(), now.getMonth(), now.getDate());
+      todayBadge.textContent = `today: ${todayISO}`;
+
+      let view = new Date(now.getFullYear(), now.getMonth(), 1);
+      let selectedISO = null;
+      let selectedCell = null;
+
+      function monthMeta(dateObj){
+        const y = dateObj.getFullYear();
+        const m = dateObj.getMonth();
+        const first = new Date(y, m, 1);
+        const last = new Date(y, m + 1, 0);
+        const daysInMonth = last.getDate();
+        const startDow = first.getDay(); // 0=Sun
+        return { y, m, first, last, daysInMonth, startDow };
+      }
+
+      function render(){
+        const { y, m, daysInMonth, startDow } = monthMeta(view);
+        monthLabel.textContent = `${months[m]} ${y}`;
+
+        grid.innerHTML = "";
+
+        // 6 rows x 7 cols = 42 cells for consistent layout
+        const totalCells = 42;
+
+        // previous month's tail
+        const prevLast = new Date(y, m, 0).getDate();
+
+        for (let i=0; i<totalCells; i++){
+          const cell = document.createElement('button');
+          cell.type = "button";
+          cell.className = "day";
+          cell.setAttribute("role","gridcell");
+
+          const dayNum = i - startDow + 1;
+          let cellDate = null;
+          let inMonth = true;
+
+          if (dayNum < 1){
+            inMonth = false;
+            const d = prevLast + dayNum;
+            const prevDate = new Date(y, m-1, d);
+            cellDate = prevDate;
+          } else if (dayNum > daysInMonth){
+            inMonth = false;
+            const d = dayNum - daysInMonth;
+            const nextDate = new Date(y, m+1, d);
+            cellDate = nextDate;
+          } else {
+            cellDate = new Date(y, m, dayNum);
+          }
+
+          const iso = fmtKey(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate());
+          const state = getState(iso);
+          const note = getNote(iso);
+
+          if (!inMonth) cell.classList.add("muted");
+          if (state === "YES") cell.classList.add("yes");
+          if (state === "NO") cell.classList.add("no");
+
+          // number
+          const num = document.createElement('div');
+          num.className = "num";
+          num.textContent = cellDate.getDate();
+
+          // stamp
+          const stamp = document.createElement('div');
+          stamp.className = "stamp";
+          const dot = document.createElement('span');
+          dot.className = "dot";
+          const txt = document.createElement('span');
+          txt.textContent = state ? state : "—";
+          stamp.appendChild(dot);
+          stamp.appendChild(txt);
+
+          // note preview (optional)
+          const mini = document.createElement('div');
+          mini.className = "miniNote";
+          mini.textContent = note ? note : "";
+          mini.style.opacity = note ? "1" : "0";
+
+          // today ring
+          if (iso === todayISO){
+            cell.style.borderColor = "rgba(120,80,255,.35)";
+            cell.style.boxShadow = "0 14px 32px rgba(120,80,255,.10), 0 10px 22px rgba(0,0,0,.05)";
+          }
+
+          cell.appendChild(num);
+          cell.appendChild(stamp);
+          cell.appendChild(mini);
+
+          // click opens drawer
+          cell.addEventListener('click', () => openDrawer(iso, cell));
+
+          // for keyboard focus
+          cell.setAttribute("aria-label", `${iso} ${state ? state : "UNSET"}`);
+
+          grid.appendChild(cell);
+        }
+      }
+
+      function openDrawer(iso, cell){
+        selectedISO = iso;
+        selectedCell = cell;
+
+        // Update drawer header
+        drawerTitle.textContent = iso;
+        const st = getState(iso);
+        drawerSub.textContent = st === "YES" ? "YES day — do things." :
+                                st === "NO"  ? "NO day — refuse." :
+                                "Unset — blank day.";
+        stateLine.textContent = `State: ${st ? st : "UNSET"}`;
+
+        // Load note
+        const n = getNote(iso);
+        noteInput.value = n;
+        charCount.textContent = String(n.length);
+
+        // show
+        backdrop.classList.add('open');
+        drawer.classList.add('open');
+
+        // focus
+        setTimeout(() => setYesBtn.focus(), 0);
+      }
+
+      function closeDrawer(){
+        backdrop.classList.remove('open');
+        drawer.classList.remove('open');
+        selectedISO = null;
+
+        // return focus
+        if (selectedCell) selectedCell.focus();
+        selectedCell = null;
+      }
+
+      function animateStampFor(iso){
+        // Find the cell for iso in current view and pop its stamp
+        // (We re-render, so easiest: render then pop the cell's stamp by scanning)
+        const cells = Array.from(grid.querySelectorAll('.day'));
+        for (const c of cells){
+          const label = c.getAttribute('aria-label') || "";
+          if (label.startsWith(iso)){
+            const stamp = c.querySelector('.stamp');
+            if (stamp){
+              stamp.classList.remove('pop');
+              // force reflow
+              void stamp.offsetWidth;
+              stamp.classList.add('pop');
+            }
+            break;
+          }
+        }
+      }
+
+      function applyState(v){
+        if (!selectedISO) return;
+        setState(selectedISO, v);
+        render();
+        animateStampFor(selectedISO);
+
+        // update drawer text (keep open)
+        const st = getState(selectedISO);
+        drawerSub.textContent = st === "YES" ? "YES day — do things." :
+                                st === "NO"  ? "NO day — refuse." :
+                                "Unset — blank day.";
+        stateLine.textContent = `State: ${st ? st : "UNSET"}`;
+      }
+
+      // Drawer buttons
+      setYesBtn.addEventListener('click', () => applyState("YES"));
+      setNoBtn.addEventListener('click', () => applyState("NO"));
+      setUnsetBtn.addEventListener('click', () => applyState(null));
+
+      // Note autosave
+      let noteTimer = null;
+      noteInput.addEventListener('input', () => {
+        const txt = noteInput.value || "";
+        charCount.textContent = String(txt.length);
+        if (!selectedISO) return;
+
+        clearTimeout(noteTimer);
+        noteTimer = setTimeout(() => {
+          setNote(selectedISO, txt);
+          render();
+        }, 220);
+      });
+
+      // Nav
+      prevBtn.addEventListener('click', () => { view = new Date(view.getFullYear(), view.getMonth()-1, 1); render(); });
+      nextBtn.addEventListener('click', () => { view = new Date(view.getFullYear(), view.getMonth()+1, 1); render(); });
+      jumpTodayBtn.addEventListener('click', () => { view = new Date(now.getFullYear(), now.getMonth(), 1); render(); });
+
+      clearMonthBtn.addEventListener('click', () => {
+        const { y, m, daysInMonth } = monthMeta(view);
+        // clear only state keys for days of this month; keep notes
+        for (let d=1; d<=daysInMonth; d++){
+          const iso = fmtKey(y,m,d);
+          localStorage.removeItem(stateKey(iso));
+        }
+        render();
+      });
+
+      // Close interactions
+      closeDrawerBtn.addEventListener('click', closeDrawer);
+      backdrop.addEventListener('click', closeDrawer);
+
+      // Keyboard shortcuts
+      window.addEventListener('keydown', (e) => {
+        const isOpen = drawer.classList.contains('open');
+
+        if (isOpen){
+          if (e.key === "Escape"){ e.preventDefault(); closeDrawer(); return; }
+          if (e.key.toLowerCase() === "y"){ e.preventDefault(); applyState("YES"); return; }
+          if (e.key.toLowerCase() === "n"){ e.preventDefault(); applyState("NO"); return; }
+          if (e.key.toLowerCase() === "u"){ e.preventDefault(); applyState(null); return; }
+        }
+      });
+
+      // First render
+      render();
+    })();
+  </script>
+</body>
+</html>
