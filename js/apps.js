@@ -6,7 +6,6 @@ export const APPS = {
   hophop:     { name: "HOPHOP",     href: "hophop.html",      tag: "PROTO" },
   notecenter: { name: "NOTECENTER", href: "NoteCenter.html",  tag: "LIVE"  },
   yesno:      { name: "YESNO",      href: "yesno.html",       tag: "LIVE"  },
-  cal:        { name: "CAL",        href: "cal.html",         tag: "LIVE"  },
   polygone:   { name: "POLYGONE",   href: "polyGONE.html",    tag: "LIVE"  },
   thumbshooter: { name: "THUMBSHOOTER", href: "thumbshooter.html", tag: "LIVE" },
   egg:        { name: "EGG",        href: "egg.html",         tag: "LIVE"  },
