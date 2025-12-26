@@ -7,12 +7,15 @@ export const APPS = {
   notecenter: { name: "NOTECENTER", href: "NoteCenter.html",  tag: "LIVE"  },
   yesno:      { name: "YESNO",      href: "yesno.html",       tag: "LIVE"  },
   cal:        { name: "CAL",        href: "cal.html",         tag: "LIVE"  },
+  polygone:   { name: "POLYGONE",   href: "polyGONE.html",    tag: "LIVE"  },
+  thumbshooter: { name: "THUMBSHOOTER", href: "thumbshooter.html", tag: "LIVE" },
+  egg:        { name: "EGG",        href: "egg.html",         tag: "LIVE"  },
+  rpsduo:     { name: "RPSDUO",     href: "rpsduo.html",      tag: "LIVE"  },
 
   // secret terminal-only apps
   notes:      { name: "NOTES",      href: "terminalnotes.html", tag: "HIDDEN" },
   beausphere: { name: "BEAU",       href: "beausphere.html",    tag: "HIDDEN" },
   boom:       { name: "BOOM",       href: "boom.html",          tag: "HIDDEN" },
-  egg:        { name: "EGG",        href: "egg.html",           tag: "HIDDEN" },
 };
 
 export const CMDS = ["help","list","open","demo","about","contact","clear","theme","ping"];
