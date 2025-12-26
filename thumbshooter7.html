@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<title>Thumb Shooter — Arcade</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;touch-action:none;user-select:none;-webkit-user-select:none}
+  html,body{width:100%;height:100%;overflow:hidden;background:#000}
+  canvas{display:block}
+
+  /* Arcade UI */
+  :root{
+    --c-cyan:#00ffff;
+    --c-yellow:#ffff00;
+    --c-red:#ff3333;
+    --c-white:#ffffff;
+  }
+
+  #ui{
+    position:absolute;top:10px;left:10px;
+    color:var(--c-cyan);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size:14px;line-height:1.35;
+    background: rgba(0,0,0,0.55);
+    padding:8px 10px;
+    border-radius:12px;
+    border:1px solid rgba(0,255,255,0.22);
+    box-shadow: 0 0 18px rgba(0,255,255,0.10);
+    min-width: 170px;
+  }
+  #ui b{color:#fff}
+  #ui .row{display:flex;justify-content:space-between;gap:10px}
+  #ui .label{opacity:.9}
+  #ui .val{text-align:right;min-width:64px}
+
+  #crt{
+    position:absolute;inset:0;pointer-events:none;
+    /* Scanlines + slight vignette */
+    background:
+      radial-gradient(ellipse at center, rgba(0,0,0,0) 0%, rgba(0,0,0,0.35) 65%, rgba(0,0,0,0.65) 100%),
+      repeating-linear-gradient(to bottom,
+        rgba(255,255,255,0.03) 0px,
+        rgba(255,255,255,0.03) 1px,
+        rgba(0,0,0,0) 3px,
+        rgba(0,0,0,0) 6px
+      );
+    mix-blend-mode: screen;
+    opacity: .35;
+  }
+
+  #overlay[hidden]{display:none !important;}
+  #overlay{
+    position:absolute;inset:0;
+    display:flex;align-items:center;justify-content:center;
+    padding:18px;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.85) 75%);
+  }
+  #card{
+    width:min(520px, 100%);
+    border-radius:18px;
+    padding:18px 16px;
+    background: rgba(0,0,0,0.55);
+    border: 1px solid rgba(0,255,255,0.20);
+    box-shadow: 0 0 28px rgba(0,255,255,0.10);
+    color:#d9ffff;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  }
+  #title{
+    font-size:26px;
+    color:var(--c-cyan);
+    text-shadow: 0 0 14px rgba(0,255,255,.22);
+    letter-spacing: 1px;
+  }
+  #subtitle{
+    margin-top:6px;
+    color:#b8ffff;
+    opacity:.92;
+  }
+  .hr{
+    height:1px;background:rgba(0,255,255,0.16);
+    margin:14px 0;
+  }
+  .grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:10px 14px;
+    font-size:13px;
+  }
+  .pill{
+    display:inline-block;
+    padding:3px 8px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,0.16);
+    background: rgba(255,255,255,0.06);
+    margin-right:6px;
+    white-space:nowrap;
+  }
+  #ctaRow{
+    margin-top:14px;
+    display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;
+  }
+  #btn{
+    appearance:none;border:1px solid rgba(0,255,255,0.35);
+    background: rgba(0,255,255,0.12);
+    color: #dfffff;
+    padding:10px 14px;
+    border-radius:12px;
+    font-weight:700;
+    letter-spacing:.6px;
+    cursor:pointer;
+    box-shadow: 0 0 18px rgba(0,255,255,0.10);
+  }
+  #btn:active{transform: translateY(1px)}
+  #small{
+    font-size:12px;opacity:.85;
+  }
+  #stats{
+    font-size:13px;opacity:.95;
+  }
+  #stats b{color:#fff}
+
+  /* Mobile tightening */
+  @media (max-width: 420px){
+    #title{font-size:22px}
+    .grid{grid-template-columns:1fr}
+    #ui{font-size:13px}
+  }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="ui">
+  <div class="row"><span class="label">Score</span><span class="val"><b><span id="score">0</span></b></span></div>
+  <div class="row"><span class="label">Best</span><span class="val"><span id="best">0</span></span></div>
+  <div class="row"><span class="label">Wave</span><span class="val"><span id="wave">1</span><span id="phase"></span></span></div>
+  <div class="row"><span class="label">HP</span><span class="val"><span id="hp">♥♥♥</span></span></div>
+</div>
+
+<div id="overlay" hidden>
+  <div id="card" role="dialog" aria-modal="true">
+    <div id="title">THUMB SHOOTER</div>
+    <div id="subtitle">Drag to dodge • Auto-fire • Survive the waves</div>
+    <div class="hr"></div>
+
+    <div class="grid" id="legend">
+      <div><span class="pill">⚪</span>Drifter — easy faller</div>
+      <div><span class="pill">🔺</span>Chaser — soft homing</div>
+      <div><span class="pill">🟥</span>Tank — high HP</div>
+      <div><span class="pill">🔷</span>Shooter — fires back</div>
+      <div><span class="pill">⭐</span>Kamikaze — dash burst</div>
+      <div><span class="pill">🟦</span>Rest — small reward</div>
+    </div>
+
+    <div class="hr"></div>
+
+    <div id="stats">Score: <b><span id="ovScore">0</span></b> • Best: <b><span id="ovBest">0</span></b> • Wave: <b><span id="ovWave">1</span></b></div>
+
+    <div id="ctaRow">
+      <button id="btn">PLAY</button>
+      <div id="small">Tip: during rest, breathe and reposition.</div>
+    </div>
+  </div>
+</div>
+
+<div id="crt"></div>
+
+<script>
+(() => {
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d", { alpha: false });
+
+  const scoreEl = document.getElementById("score");
+  const bestEl  = document.getElementById("best");
+  const waveEl  = document.getElementById("wave");
+  const phaseEl = document.getElementById("phase");
+  const hpEl    = document.getElementById("hp");
+
+  const overlay = document.getElementById("overlay");
+  const btn = document.getElementById("btn");
+  const ovScore = document.getElementById("ovScore");
+  const ovBest  = document.getElementById("ovBest");
+  const ovWave  = document.getElementById("ovWave");
+
+  function resize() {
+    canvas.width  = Math.floor(window.innerWidth);
+    canvas.height = Math.floor(window.innerHeight);
+  }
+  window.addEventListener("resize", resize, { passive: true });
+  resize();
+
+  // ---------- state ----------
+  const MAX_HP = 3;
+  let player, bullets, enemies, enemyBullets;
+  let score = 0;
+  let best = Number(localStorage.getItem("thumb_best_arcade") || 0);
+
+  let started = false;
+  let gameOver = false;
+  let invulnMs = 0;
+
+  // wave/phase
+  let wave = 1;
+  const WAVE_MS = 20000;
+  const REST_MS = 3200;
+  let waveTimer = 0;
+  let inRest = false;
+  let spawnTimer = 0;
+
+  // input
+  let pointerActive = false;
+
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+  function dist(ax, ay, bx, by) { return Math.hypot(ax - bx, ay - by); }
+
+  function hearts(hp) {
+    return "♥".repeat(Math.max(0, hp)) + "·".repeat(Math.max(0, MAX_HP - hp));
+  }
+
+  function uiSync() {
+    scoreEl.textContent = String(Math.floor(score));
+    bestEl.textContent = String(Math.floor(best));
+    waveEl.textContent = String(wave);
+    hpEl.textContent = hearts(player.hp);
+    phaseEl.textContent = inRest ? " (rest)" : "";
+  }
+
+  function showOverlay(mode) {
+    overlay.hidden = false;
+    ovScore.textContent = String(Math.floor(score));
+    ovBest.textContent  = String(Math.floor(best));
+    ovWave.textContent  = String(wave);
+    btn.textContent = mode === "over" ? "PLAY AGAIN" : "PLAY";
+  }
+  function hideOverlay() {
+    overlay.hidden = true;
+  }
+
+  function resetRun() {
+    player = { x: canvas.width / 2, y: canvas.height * 0.78, r: 16, hp: MAX_HP };
+    bullets = [];
+    enemies = [];
+    enemyBullets = [];
+    score = 0;
+
+    wave = 1;
+    waveTimer = 0;
+    inRest = false;
+    spawnTimer = 0;
+    invulnMs = 0;
+
+    gameOver = false;
+    uiSync();
+  }
+
+  // ---------- enemy definitions ----------
+  const ENEMIES = {
+    drifter: {
+      shape: "circle",
+      baseHp: 1,
+      size: 14,
+      baseSpeed: 140,
+      score: 10,
+      color: "#ff3333",
+      update(e, dt) { e.y += e.vy * dt; }
+    },
+    chaser: {
+      shape: "triangle",
+      baseHp: 2,
+      size: 15,
+      baseSpeed: 150,
+      score: 20,
+      color: "#ff7a33",
+      update(e, dt) {
+        const dx = player.x - e.x, dy = player.y - e.y;
+        const d = Math.hypot(dx, dy) || 1;
+        const desiredVx = (dx / d) * e.speed * 0.65;
+        const desiredVy = (dy / d) * e.speed * 0.65;
+        const turn = 4.0;
+        e.vx += (desiredVx - e.vx) * clamp(turn * dt, 0, 1);
+        e.vy += (desiredVy - e.vy) * clamp(turn * dt, 0, 1);
+        e.vy = Math.max(e.vy, e.speed * 0.35);
+        e.x += e.vx * dt;
+        e.y += e.vy * dt;
+      }
+    },
+    tank: {
+      shape: "square",
+      baseHp: 6,
+      size: 20,
+      baseSpeed: 105,
+      score: 40,
+      color: "#ff335f",
+      update(e, dt) { e.y += e.vy * dt; }
+    },
+    shooter: {
+      shape: "diamond",
+      baseHp: 3,
+      size: 16,
+      baseSpeed: 125,
+      score: 60,
+      color: "#c85bff",
+      update(e, dt) {
+        e.y += e.vy * dt;
+        e.cooldown -= dt;
+        if (e.cooldown <= 0) {
+          e.cooldown = e.shotCd;
+          fireEnemyShot(e);
+        }
+      }
+    },
+    kamikaze: {
+      shape: "star",
+      baseHp: 1,
+      size: 15,
+      baseSpeed: 145,
+      score: 50,
+      color: "#ffe94d",
+      update(e, dt) {
+        e.y += e.vy * dt;
+        if (!e.dashed && dist(e.x, e.y, player.x, player.y) < 190) {
+          e.dashed = true;
+          const dx = player.x - e.x, dy = player.y - e.y;
+          const d = Math.hypot(dx, dy) || 1;
+          e.vx = (dx / d) * e.speed * 2.6;
+          e.vy = (dy / d) * e.speed * 2.6;
+        }
+        e.x += e.vx * dt;
+        e.y += e.vy * dt;
+        e.vx *= Math.pow(0.35, dt);
+        e.vy *= Math.pow(0.45, dt);
+        e.vy = Math.max(e.vy, e.speed * 0.30);
+      }
+    }
+  };
+
+  function waveWeights(w) {
+    if (w <= 2) return { drifter: 75, chaser: 25, tank: 0, shooter: 0, kamikaze: 0 };
+    if (w <= 4) return { drifter: 55, chaser: 30, tank: 15, shooter: 0, kamikaze: 0 };
+    if (w <= 7) return { drifter: 35, chaser: 30, tank: 20, shooter: 10, kamikaze: 5 };
+    if (w <= 10) return { drifter: 25, chaser: 25, tank: 20, shooter: 18, kamikaze: 12 };
+    return { drifter: 18, chaser: 22, tank: 20, shooter: 22, kamikaze: 18 };
+  }
+
+  function pickType(weights) {
+    const entries = Object.entries(weights);
+    const total = entries.reduce((s, [,v]) => s + v, 0);
+    let r = Math.random() * total;
+    for (const [k, v] of entries) {
+      r -= v;
+      if (r <= 0) return k;
+    }
+    return entries[0][0];
+  }
+
+  function difficultyMult() {
+    return clamp(1 + (wave - 1) * 0.06, 1, 2.0);
+  }
+
+  function maxEnemiesForWave() {
+    return Math.floor(clamp(9 + (wave - 1) * 1.5, 9, 26));
+  }
+
+  function spawnIntervalMs() {
+    const base = 720;
+    const ms = base - (wave - 1) * 34;
+    return clamp(ms, 260, base);
+  }
+
+  function spawnEnemy() {
+    const type = pickType(waveWeights(wave));
+    const def = ENEMIES[type];
+    const mult = difficultyMult();
+
+    const hp = Math.max(1, Math.round(def.baseHp + (wave > 6 ? (wave - 6) * 0.12 : 0)));
+    const speed = def.baseSpeed * mult;
+
+    const x = Math.random() * canvas.width;
+    const y = -40;
+
+    return {
+      type,
+      x, y,
+      r: def.size,
+      hp,
+      maxHp: hp,
+      speed,
+      vx: 0,
+      vy: speed,  // px/s
+      cooldown: type === "shooter" ? (0.4 + Math.random() * 0.5) : 0,
+      shotCd: type === "shooter" ? clamp(1.3 - (wave - 1) * 0.05, 0.65, 1.3) : 0,
+      dashed: false
+    };
+  }
+
+  function fireEnemyShot(e) {
+    const dx = player.x - e.x, dy = player.y - e.y;
+    const d = Math.hypot(dx, dy) || 1;
+    const spd = clamp(320 + (wave - 1) * 10, 320, 520);
+    enemyBullets.push({
+      x: e.x, y: e.y,
+      vx: (dx / d) * spd,
+      vy: (dy / d) * spd,
+      r: 5
+    });
+  }
+
+  // ---------- drawing ----------
+  function drawEnemy(e) {
+    ctx.save();
+    ctx.translate(e.x, e.y);
+    ctx.fillStyle = ENEMIES[e.type].color;
+
+    const shape = ENEMIES[e.type].shape;
+    if (shape === "circle") {
+      ctx.beginPath(); ctx.arc(0, 0, e.r, 0, Math.PI * 2); ctx.fill();
+    } else if (shape === "triangle") {
+      ctx.beginPath();
+      ctx.moveTo(0, -e.r);
+      ctx.lineTo(e.r * 0.95, e.r);
+      ctx.lineTo(-e.r * 0.95, e.r);
+      ctx.closePath(); ctx.fill();
+    } else if (shape === "square") {
+      ctx.fillRect(-e.r, -e.r, e.r * 2, e.r * 2);
+    } else if (shape === "diamond") {
+      ctx.beginPath();
+      ctx.moveTo(0, -e.r);
+      ctx.lineTo(e.r, 0);
+      ctx.lineTo(0, e.r);
+      ctx.lineTo(-e.r, 0);
+      ctx.closePath(); ctx.fill();
+    } else if (shape === "star") {
+      const spikes = 5, outer = e.r, inner = e.r * 0.45;
+      let rot = Math.PI / 2 * 3;
+      const step = Math.PI / spikes;
+      ctx.beginPath();
+      ctx.moveTo(0, -outer);
+      for (let i = 0; i < spikes; i++) {
+        ctx.lineTo(Math.cos(rot) * outer, Math.sin(rot) * outer); rot += step;
+        ctx.lineTo(Math.cos(rot) * inner, Math.sin(rot) * inner); rot += step;
+      }
+      ctx.closePath(); ctx.fill();
+    }
+
+    // HP bar for tanks / high HP
+    if (e.type === "tank" || e.maxHp >= 6) {
+      const w = e.r * 2, h = 4;
+      const pct = clamp(e.hp / e.maxHp, 0, 1);
+      ctx.fillStyle = "rgba(0,0,0,0.6)";
+      ctx.fillRect(-w/2, e.r + 8, w, h);
+      ctx.fillStyle = "rgba(255,255,255,0.85)";
+      ctx.fillRect(-w/2, e.r + 8, w * pct, h);
+    }
+
+    ctx.restore();
+  }
+
+  function drawPlayer() {
+    const blink = invulnMs > 0 && (Math.floor(invulnMs / 80) % 2 === 0);
+    if (blink) return;
+    ctx.fillStyle = "#00ffff";
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // ---------- shooting ----------
+  let shootTimer = 0;
+  const SHOOT_MS = 175;
+  function shoot() {
+    bullets.push({ x: player.x, y: player.y - 18, vx: 0, vy: -620, r: 4 });
+  }
+
+  // ---------- collisions ----------
+  function hurtPlayer() {
+    if (invulnMs > 0) return;
+    player.hp -= 1;
+    invulnMs = 900;
+    if (player.hp <= 0) endGame();
+    uiSync();
+  }
+
+  function endGame() {
+    gameOver = true;
+    started = false;
+    if (score > best) {
+      best = Math.floor(score);
+      localStorage.setItem("thumb_best_arcade", String(best));
+    }
+    uiSync();
+    showOverlay("over");
+  }
+
+  function startWave(n) {
+    wave = n;
+    inRest = false;
+    waveTimer = 0;
+    uiSync();
+  }
+
+  function startRest() {
+    inRest = true;
+    waveTimer = 0;
+
+    // comfort reward
+    if (player.hp < MAX_HP) player.hp += 1;
+    score += (25 + wave * 10);
+    uiSync();
+  }
+
+  // ---------- input ----------
+  function setPlayerPos(x, y) {
+    player.x = clamp(x, 10, canvas.width - 10);
+    player.y = clamp(y, 30, canvas.height - 30);
+  }
+
+  canvas.addEventListener("pointerdown", (e) => {
+    pointerActive = true;
+    canvas.setPointerCapture(e.pointerId);
+    if (started) setPlayerPos(e.clientX, e.clientY);
+  });
+  canvas.addEventListener("pointermove", (e) => {
+    if (!pointerActive || !started) return;
+    setPlayerPos(e.clientX, e.clientY);
+  });
+  canvas.addEventListener("pointerup", () => { pointerActive = false; });
+  canvas.addEventListener("pointercancel", () => { pointerActive = false; });
+
+  function beginPlay() {
+    resetRun();
+    started = true;
+    gameOver = false;
+    hideOverlay();
+  }
+
+  btn.addEventListener("click", beginPlay);
+  overlay.addEventListener("pointerdown", (e) => {
+    // allow tap anywhere on overlay to start
+    e.preventDefault();
+    beginPlay();
+  });
+
+  // ---------- main loop ----------
+  let last = performance.now();
+
+  function loop(now) {
+    const dt = clamp((now - last) / 1000, 0, 0.05);
+    last = now;
+
+    if (started && !gameOver) {
+      // wave timing
+      waveTimer += dt * 1000;
+      if (!inRest && waveTimer >= WAVE_MS) startRest();
+      else if (inRest && waveTimer >= REST_MS) startWave(wave + 1);
+
+      // spawn
+      const maxE = maxEnemiesForWave();
+      if (!inRest && enemies.length < maxE) {
+        spawnTimer += dt * 1000;
+        const si = spawnIntervalMs();
+        while (spawnTimer >= si) {
+          spawnTimer -= si;
+          enemies.push(spawnEnemy());
+          if (enemies.length >= maxE) break;
+        }
+      }
+
+      // shooting
+      shootTimer += dt * 1000;
+      while (shootTimer >= SHOOT_MS) {
+        shootTimer -= SHOOT_MS;
+        shoot();
+      }
+
+      // bullets
+      for (const b of bullets) { b.x += b.vx * dt; b.y += b.vy * dt; }
+      bullets = bullets.filter(b => b.y > -40 && b.y < canvas.height + 40);
+
+      for (const b of enemyBullets) { b.x += b.vx * dt; b.y += b.vy * dt; }
+      enemyBullets = enemyBullets.filter(b => b.y > -80 && b.y < canvas.height + 80 && b.x > -80 && b.x < canvas.width + 80);
+
+      // enemies
+      for (const e of enemies) { ENEMIES[e.type].update(e, dt); }
+      enemies = enemies.filter(e => e.y < canvas.height + 120 && e.x > -200 && e.x < canvas.width + 200);
+
+      // player vs enemy bullets
+      for (let i = enemyBullets.length - 1; i >= 0; i--) {
+        const eb = enemyBullets[i];
+        if (dist(eb.x, eb.y, player.x, player.y) < eb.r + player.r) {
+          enemyBullets.splice(i, 1);
+          hurtPlayer();
+          break;
+        }
+      }
+
+      // player vs enemies
+      for (let i = enemies.length - 1; i >= 0; i--) {
+        const e = enemies[i];
+        if (dist(e.x, e.y, player.x, player.y) < e.r + player.r) {
+          enemies.splice(i, 1);
+          hurtPlayer();
+        }
+      }
+
+      // bullets vs enemies
+      for (let ei = enemies.length - 1; ei >= 0; ei--) {
+        const e = enemies[ei];
+        for (let bi = bullets.length - 1; bi >= 0; bi--) {
+          const b = bullets[bi];
+          if (dist(e.x, e.y, b.x, b.y) < e.r + b.r) {
+            bullets.splice(bi, 1);
+            e.hp -= 1;
+            if (e.hp <= 0) {
+              score += ENEMIES[e.type].score;
+              enemies.splice(ei, 1);
+              uiSync();
+            }
+            break;
+          }
+        }
+      }
+
+      // gentle score drip
+      score += dt * 2.5;
+      if (score > best) best = Math.max(best, Math.floor(score));
+      if (invulnMs > 0) invulnMs = Math.max(0, invulnMs - dt * 1000);
+      uiSync();
+    }
+
+    // draw
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // bullets
+    ctx.fillStyle = "#ffff00";
+    for (const b of bullets) { ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill(); }
+
+    // enemy bullets
+    ctx.fillStyle = "#ffffff";
+    for (const b of enemyBullets) { ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill(); }
+
+    // enemies
+    for (const e of enemies) drawEnemy(e);
+
+    // player
+    drawPlayer();
+
+    requestAnimationFrame(loop);
+  }
+
+  // init
+  bestEl.textContent = String(Math.floor(best));
+  resetRun();
+  started = false;
+  showOverlay("start");
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

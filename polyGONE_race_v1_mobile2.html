@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>polyGONE Race Bet v1</title>
+<style>
+  :root { --g:#00ff66; --bg:#0b0f0c; --panel:#07150c; --dim:#0a2a18; }
+  body{
+    margin:0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    background: radial-gradient(1200px 600px at 50% 0%, #102817 0%, var(--bg) 45%, #060806 100%);
+    color: var(--g);
+    display:flex; flex-direction:column; align-items:center;
+  }
+  h1{ margin:14px 10px 6px; letter-spacing:2px; font-size:20px; text-align:center; }
+  .wrap{ width:min(860px, 96vw); }
+  #ui{
+    background: linear-gradient(180deg, rgba(0,255,102,.06), rgba(0,0,0,.0));
+    border:1px solid rgba(0,255,102,.35);
+    border-radius:14px;
+    padding:10px;
+    display:flex; gap:10px; flex-wrap:wrap; justify-content:space-between; align-items:flex-end;
+    box-shadow: 0 0 0 1px rgba(0,255,102,.08) inset, 0 14px 40px rgba(0,0,0,.35);
+  }
+  .card{
+    background: rgba(0,0,0,.35);
+    border:1px solid rgba(0,255,102,.25);
+    border-radius:12px;
+    padding:10px;
+    min-width: 190px;
+  }
+  .card strong{ display:inline-block; margin-bottom:6px; }
+  label{ display:block; font-size:12px; opacity:.9; margin:6px 0 3px; }
+  input, select, button{
+    background:#000;
+    color:var(--g);
+    border:1px solid rgba(0,255,102,.55);
+    border-radius:10px;
+    padding:8px 10px;
+    width:100%;
+    box-sizing:border-box;
+    outline:none;
+  }
+  button{ cursor:pointer; font-weight:700; }
+  button:hover{ filter: brightness(1.08); }
+  .btnRow{ display:flex; gap:8px; }
+  .btnRow button{ width:auto; padding:8px 12px; }
+  canvas{
+    margin-top:10px;
+    width:100%;
+    height:auto;
+    background: linear-gradient(180deg, rgba(0,255,102,.03), rgba(0,0,0,.15));
+    border:2px solid rgba(0,255,102,.55);
+    border-radius:16px;
+  }
+  #hud{
+    margin:10px 0 0;
+    display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;
+    font-size:12px; opacity:.95;
+  }
+  #results{
+    margin:10px 0 18px;
+    padding:12px;
+    border-radius:14px;
+    border:1px solid rgba(0,255,102,.35);
+    background: rgba(0,0,0,.35);
+    min-height: 56px;
+  }
+  .blink{ animation: blink 0.75s steps(2, jump-none) infinite; }
+  @keyframes blink { 50% { opacity: 0.1; } }
+  .small{ opacity:.85; font-size:12px; }
+  .log{ margin-top:8px; padding-top:8px; border-top:1px dashed rgba(0,255,102,.25); line-height:1.35; }
+  .pill{
+    display:inline-block; padding:2px 8px; border-radius:999px;
+    border:1px solid rgba(0,255,102,.35); background: rgba(0,0,0,.25);
+    font-size:11px; margin-right:6px;
+  }
+
+  /* --- Mobile polish (CSS-only; keeps race logic untouched) --- */
+  @media (max-width: 520px) {
+    h1 { font-size: 18px; margin-top: 12px; }
+    .wrap{ width: min(860px, 94vw); }
+    #ui { gap: 8px; padding: 10px; }
+    .card { min-width: unset; width: 100%; }
+    .btnRow { width: 100%; }
+    .btnRow button { flex: 1; }
+    #hud { font-size: 11px; }
+    #results { font-size: 14px; }
+    canvas { max-height: 46vh; }
+  }
+
+  /* Thumb-friendly + prevent iOS input zoom */
+  input, select, button { min-height: 44px; font-size: 16px; }
+
+  /* Avoid canvas height collapsing on mobile */
+  canvas { display:block; aspect-ratio: 900 / 380; }
+
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>polyGONE RACE BET</h1>
+
+    <div id="ui">
+      <div class="card">
+        <strong>P1</strong>
+        <label>Racer</label>
+        <select id="p1pick"></select>
+        <label>Bet</label>
+        <input id="p1bet" type="number" value="10" min="1" />
+      </div>
+
+      <div class="card">
+        <strong>P2</strong>
+        <label>Racer</label>
+        <select id="p2pick"></select>
+        <label>Bet</label>
+        <input id="p2bet" type="number" value="10" min="1" />
+      </div>
+
+      <div class="card">
+        <strong>ROUND</strong>
+        <label>Seed</label>
+        <input id="seedInput" value="duck123" />
+        <div class="btnRow" style="margin-top:8px">
+          <button id="randSeed" type="button">Random</button>
+          <button id="startBtn" type="button">Start</button>
+        </div>
+        <div class="small" style="margin-top:8px">Same seed = same chaos.</div>
+      </div>
+    </div>
+
+    <div id="hud">
+      <div><span class="pill">SEED</span><span id="hudSeed">—</span></div>
+      <div><span class="pill">POT</span><span id="hudPot">—</span></div>
+      <div><span class="pill">STATE</span><span id="hudState">LOBBY</span></div>
+    </div>
+
+    <canvas id="game" width="900" height="380"></canvas>
+
+    <div id="results">Set bets, pick racers, enter a seed, hit <strong>Start</strong>.</div>
+  </div>
+
+<script>
+/**
+ * polyGONE Race Bet v1
+ * - single-file, local 2-player
+ * - deterministic races via seeded RNG
+ * - "funny chaos" events (shot / banana peel / turbo) also deterministic via seed
+ */
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const racerNames = ["RED", "BLUE", "GREEN", "YELLOW"];
+const colors = ["#ff3344", "#3388ff", "#36ff7a", "#ffe34a"];
+const lanes = 4;
+
+const ui = {
+  p1pick: document.getElementById("p1pick"),
+  p2pick: document.getElementById("p2pick"),
+  p1bet: document.getElementById("p1bet"),
+  p2bet: document.getElementById("p2bet"),
+  seedInput: document.getElementById("seedInput"),
+  randSeed: document.getElementById("randSeed"),
+  startBtn: document.getElementById("startBtn"),
+  results: document.getElementById("results"),
+  hudSeed: document.getElementById("hudSeed"),
+  hudPot: document.getElementById("hudPot"),
+  hudState: document.getElementById("hudState"),
+};
+
+racerNames.forEach((n, i) => {
+  ui.p1pick.add(new Option(n, i));
+  ui.p2pick.add(new Option(n, i));
+});
+
+let racers = [];
+let state = "LOBBY";        // LOBBY | COUNTDOWN | RACING | RESULTS
+let finishOrder = [];
+let seed = "";
+let rng = null;
+
+let countdownMs = 1200;
+let countdownLeft = 0;
+
+let fx = {
+  // a single "shot" beam visual per event (simple + readable)
+  beams: [], // {x1,y1,x2,y2,life}
+  popups: [], // {text,x,y,life}
+};
+
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+
+// --- Seeded RNG (deterministic) ---
+function mulberry32(a) {
+  return function() {
+    let t = a += 0x6D2B79F5;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  }
+}
+function seedToInt(str) {
+  // FNV-1a-ish
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+// --- Race setup ---
+function initRace() {
+  seed = (ui.seedInput.value || "seed").trim();
+  rng = mulberry32(seedToInt(seed));
+
+  // HUD
+  ui.hudSeed.textContent = seed;
+  ui.hudPot.textContent = String(getPot());
+  setState("COUNTDOWN");
+
+  racers = [];
+  finishOrder = [];
+  fx.beams = [];
+  fx.popups = [];
+
+  const laneTop = 60;
+  const laneGap = 74;
+  const startX = 40;
+
+  for (let i = 0; i < lanes; i++) {
+    // Base stats (tiny variance)
+    const base = 1.55 + rng() * 1.1;
+
+    // Regular micro-boost pulses (deterministic)
+    const boosts = Array.from({length: 6}, () => ({
+      t: rng() * 6000,
+      v: 0.2 + rng() * 1.7
+    }));
+
+    // One "chaos" event per racer max (also deterministic)
+    // Types:
+    // - SHOT: big slow/stun near the end (comedy)
+    // - BANANA: short slip (slower) mid-race
+    // - TURBO: comeback boost
+    const chaosRoll = rng();
+    let chaos = null;
+
+    if (chaosRoll < 0.28) {
+      // SHOT near end
+      chaos = {
+        type: "SHOT",
+        fired: false,
+        progressAt: 0.82 + rng() * 0.13,   // 82–95% progress
+        stunMs: 450 + rng() * 550          // 450–1000ms
+      };
+    } else if (chaosRoll < 0.50) {
+      // BANANA mid
+      chaos = {
+        type: "BANANA",
+        fired: false,
+        progressAt: 0.35 + rng() * 0.35,   // 35–70%
+        slowMs: 350 + rng() * 500,         // 350–850ms
+        slowFactor: 0.25 + rng() * 0.35    // 0.25–0.60 speed
+      };
+    } else if (chaosRoll < 0.70) {
+      // TURBO comeback
+      chaos = {
+        type: "TURBO",
+        fired: false,
+        progressAt: 0.55 + rng() * 0.25,   // 55–80%
+        boostMs: 450 + rng() * 650,        // 450–1100ms
+        boostAdd: 1.3 + rng() * 1.9        // +1.3 to +3.2 speed
+      };
+    }
+    // else: no chaos
+
+    racers.push({
+      id: i,
+      name: racerNames[i],
+      color: colors[i],
+      x: startX,
+      y: laneTop + i * laneGap,
+      base,
+      boosts,
+      chaos,
+      done: false,
+      time: 0,
+      effect: null,      // {type, leftMs, ...}
+      finishMs: null,
+    });
+  }
+
+  countdownLeft = countdownMs;
+  ui.results.innerHTML = `<span class="pill">READY</span> Race begins in <strong>1…</strong>`;
+}
+
+function setState(next) {
+  state = next;
+  ui.hudState.textContent = next;
+}
+
+function getPot() {
+  const b1 = parseInt(ui.p1bet.value || "0", 10) || 0;
+  const b2 = parseInt(ui.p2bet.value || "0", 10) || 0;
+  return b1 + b2;
+}
+
+function addPopup(text, x, y) {
+  fx.popups.push({ text, x, y, life: 900 });
+}
+
+function addBeam(x1, y1, x2, y2) {
+  fx.beams.push({ x1, y1, x2, y2, life: 220 });
+}
+
+function startRound() {
+  initRace();
+}
+
+// --- UI actions ---
+ui.randSeed.onclick = () => {
+  ui.seedInput.value = Math.random().toString(36).slice(2, 8);
+};
+ui.startBtn.onclick = () => {
+  // Basic guardrails
+  const b1 = parseInt(ui.p1bet.value || "0", 10) || 0;
+  const b2 = parseInt(ui.p2bet.value || "0", 10) || 0;
+  if (b1 < 1 || b2 < 1) {
+    ui.results.textContent = "Both bets must be at least 1.";
+    return;
+  }
+  startRound();
+};
+
+// --- Simulation ---
+let last = 0;
+function loop(ts) {
+  const dt = Math.min(40, ts - last || 16);
+  last = ts;
+
+  update(dt);
+  draw(dt);
+
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+function update(dt) {
+  if (state === "COUNTDOWN") {
+    countdownLeft -= dt;
+    if (countdownLeft <= 0) {
+      setState("RACING");
+      ui.results.innerHTML = `<span class="pill">GO</span> <strong>RUN.</strong>`;
+    } else {
+      const t = Math.ceil(countdownLeft / 600); // 2..1
+      ui.results.innerHTML = `<span class="pill">READY</span> Race begins in <strong>${clamp(t,1,2)}…</strong>`;
+    }
+  }
+
+  if (state === "RACING") {
+    const finishX = canvas.width - 70;
+
+    racers.forEach(r => {
+      if (r.done) return;
+
+      // Determine speed this tick
+      let speed = r.base;
+
+      // Soft pulses
+      for (const b of r.boosts) {
+        if (Math.abs(r.time - b.t) < 90) speed += b.v;
+      }
+
+      // Active effect overrides / modifies
+      if (r.effect) {
+        r.effect.leftMs -= dt;
+        if (r.effect.type === "STUN") speed *= 0.05;
+        if (r.effect.type === "SLOW") speed *= r.effect.factor;
+        if (r.effect.type === "TURBO") speed += r.effect.add;
+        if (r.effect.leftMs <= 0) r.effect = null;
+      }
+
+      // Progress for chaos triggers
+      const progress = (r.x - 40) / (finishX - 40);
+
+      // Fire chaos event if it exists and we crossed threshold
+      if (r.chaos && !r.chaos.fired && progress >= r.chaos.progressAt) {
+        r.chaos.fired = true;
+
+        if (r.chaos.type === "SHOT") {
+          r.effect = { type: "STUN", leftMs: r.chaos.stunMs };
+          // beam from top-right to racer
+          addBeam(canvas.width - 30, 20, r.x + 15, r.y + 10);
+          addPopup("🔫 PEW!", r.x + 10, r.y - 8);
+          logEvent(`${r.name} got SHOT right before the finish!`);
+        } else if (r.chaos.type === "BANANA") {
+          r.effect = { type: "SLOW", leftMs: r.chaos.slowMs, factor: r.chaos.slowFactor };
+          addPopup("🍌 SLIP!", r.x + 10, r.y - 8);
+          logEvent(`${r.name} hit a banana peel.`);
+        } else if (r.chaos.type === "TURBO") {
+          r.effect = { type: "TURBO", leftMs: r.chaos.boostMs, add: r.chaos.boostAdd };
+          addPopup("🚀 TURBO!", r.x + 10, r.y - 8);
+          logEvent(`${r.name} found TURBO shoes.`);
+        }
+      }
+
+      // Move
+      r.x += speed;
+      r.time += dt;
+
+      // Finish
+      if (r.x >= finishX) {
+        r.done = true;
+        r.finishMs = r.time;
+        finishOrder.push(r);
+
+        if (finishOrder.length === racers.length) {
+          setState("RESULTS");
+          showResults();
+        }
+      }
+    });
+  }
+
+  // FX
+  fx.beams.forEach(b => b.life -= dt);
+  fx.beams = fx.beams.filter(b => b.life > 0);
+  fx.popups.forEach(p => p.life -= dt);
+  fx.popups = fx.popups.filter(p => p.life > 0);
+}
+
+function draw(dt) {
+  // Background
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Lanes
+  const laneTop = 60;
+  const laneGap = 74;
+  const laneH = 46;
+
+  for (let i = 0; i < lanes; i++) {
+    const y = laneTop + i * laneGap;
+    ctx.fillStyle = "rgba(0,255,102,0.04)";
+    ctx.fillRect(18, y - 16, canvas.width - 36, laneH);
+    ctx.strokeStyle = "rgba(0,255,102,0.14)";
+    ctx.strokeRect(18, y - 16, canvas.width - 36, laneH);
+  }
+
+  // Finish line
+  const finishX = canvas.width - 70;
+  ctx.strokeStyle = "rgba(0,255,102,0.9)";
+  ctx.beginPath();
+  ctx.moveTo(finishX + 30, 20);
+  ctx.lineTo(finishX + 30, canvas.height - 22);
+  ctx.stroke();
+
+  // Checker marks
+  ctx.fillStyle = "rgba(0,255,102,0.22)";
+  for (let y = 30; y < canvas.height - 30; y += 16) {
+    ctx.fillRect(finishX + 26 + ((y/16)%2===0?0:6), y, 6, 6);
+  }
+
+  // Racers
+  racers.forEach(r => {
+    // body
+    ctx.fillStyle = r.color;
+    ctx.fillRect(r.x, r.y, 34, 22);
+
+    // tiny "pixel eye"
+    ctx.fillStyle = "#000";
+    ctx.fillRect(r.x + 24, r.y + 7, 4, 4);
+
+    // name label
+    ctx.fillStyle = "rgba(0,255,102,0.95)";
+    ctx.fillText(r.name, 26, r.y + 14);
+
+    // effect aura
+    if (r.effect) {
+      ctx.strokeStyle = "rgba(0,255,102,0.35)";
+      ctx.strokeRect(r.x - 3, r.y - 3, 40, 28);
+    }
+  });
+
+  // Beams
+  fx.beams.forEach(b => {
+    const alpha = clamp(b.life / 220, 0, 1);
+    ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
+    ctx.beginPath();
+    ctx.moveTo(b.x1, b.y1);
+    ctx.lineTo(b.x2, b.y2);
+    ctx.stroke();
+  });
+
+  // Popups
+  fx.popups.forEach(p => {
+    const alpha = clamp(p.life / 900, 0, 1);
+    ctx.fillStyle = `rgba(0,255,102,${alpha})`;
+    ctx.fillText(p.text, p.x, p.y);
+  });
+}
+
+// --- Results + payout ---
+let eventLog = [];
+function logEvent(text) {
+  eventLog.push(text);
+  if (eventLog.length > 5) eventLog.shift();
+}
+
+function showResults() {
+  const p1 = parseInt(ui.p1pick.value, 10);
+  const p2 = parseInt(ui.p2pick.value, 10);
+  const b1 = parseInt(ui.p1bet.value || "0", 10) || 0;
+  const b2 = parseInt(ui.p2bet.value || "0", 10) || 0;
+  const pot = b1 + b2;
+
+  const winnerId = finishOrder[0].id;
+  const winnerName = racerNames[winnerId];
+
+  // payout rules (simple)
+  let outcome = "";
+  if (p1 === p2) {
+    outcome = "Both picked the same racer. Bets refunded.";
+  } else if (winnerId === p1) {
+    outcome = `Player 1 wins the pot of <strong>${pot}</strong>!`;
+  } else if (winnerId === p2) {
+    outcome = `Player 2 wins the pot of <strong>${pot}</strong>!`;
+  } else {
+    outcome = `House wins! Nobody picked <strong>${winnerName}</strong>.`;
+  }
+
+  // finish order list
+  const orderHtml = finishOrder
+    .map((r, idx) => {
+      const t = Math.round(r.finishMs);
+      return `<div>${idx+1}. <strong>${r.name}</strong> <span class="small">(${t}ms)</span></div>`;
+    })
+    .join("");
+
+  const logHtml = eventLog.length
+    ? `<div class="log"><div class="small"><strong>Chaos Log</strong></div>${eventLog.map(e=>`<div>• ${escapeHtml(e)}</div>`).join("")}</div>`
+    : "";
+
+  ui.results.innerHTML = `
+    <div style="font-size:18px; letter-spacing:2px;">
+      <span class="blink">GAME OVER</span>
+    </div>
+    <div class="small">Seed: <strong>${escapeHtml(seed)}</strong> • Pot: <strong>${pot}</strong></div>
+    <div style="margin-top:8px">Winner: <strong>${winnerName}</strong></div>
+    <div style="margin-top:10px">${outcome}</div>
+    <div class="log" style="margin-top:12px">
+      <div class="small"><strong>Finish Order</strong></div>
+      ${orderHtml}
+    </div>
+    ${logHtml}
+    <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap">
+      <button type="button" onclick="rematch()">Rematch (same seed)</button>
+      <button type="button" onclick="newRound()">New Round</button>
+    </div>
+  `;
+}
+
+function rematch() {
+  // keep same seed, reroll racers deterministically -> same result (including chaos)
+  // IMPORTANT: same seed gives same race outcome; this is intentional for "provable fairness"
+  startRound();
+}
+function newRound() {
+  setState("LOBBY");
+  ui.hudSeed.textContent = "—";
+  ui.hudPot.textContent = String(getPot());
+  ui.results.innerHTML = `Set bets, pick racers, enter a seed, hit <strong>Start</strong>.`;
+  // reset positions visuals
+  racers.forEach((r, i) => { r.x = 40; r.done = false; });
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[c]));
+}
+</script>
+</body>
+</html>
