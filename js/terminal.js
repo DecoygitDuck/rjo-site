@@ -176,11 +176,8 @@ export function termRun(raw){
       termDivider();
       termPrint("commands:", "m");
       termPrint("  list                           (show apps)", "m");
-      termPrint("  open <orby|cube|notecenter|wordbeat|hophop|yesno|cal>", "m");
-      termPrint("  (secret) open notes", "m");
-      termPrint("  (secret) open boom", "m");
-      termPrint("  (secret) open egg", "m");
-      termPrint("  (secret) open beausphere", "m");
+      termPrint("  open <app>                     (launch app)", "m");
+      termPrint("  (secret) open notes | boom | beausphere", "m");
       termPrint("  demo <app>                      (preview-only)", "m");
       termPrint("  ping                           (pulse the hero sphere)", "m");
       termPrint("  about | contact                (jump)", "m");
@@ -196,11 +193,11 @@ export function termRun(raw){
       });
       break;
     case "open":
-      if(!arg1){ termPrint("usage: open <orby|cube|notecenter|wordbeat|hophop|yesno|cal>", "err"); break; }
+      if(!arg1){ termPrint("usage: open <app>  (try: list)", "err"); break; }
       if(!openApp(arg1, "open")) termPrint(`unknown app: ${arg1}`, "err");
       break;
     case "demo":
-      if(!arg1){ termPrint("usage: demo <orby|cube|notecenter|wordbeat|hophop|yesno|cal>", "err"); break; }
+      if(!arg1){ termPrint("usage: demo <app>  (try: list)", "err"); break; }
       if(APPS[arg1]){
         const card = document.querySelector(`article.card[data-app="${arg1}"]`);
         if(card) spark(card);
