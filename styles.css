@@ -469,6 +469,24 @@
     65%{ transform: translateX(-50%) translateY(-12px) rotate(5deg); }
   }
 
+  /* New game preview animations */
+  @keyframes polyBounce{
+    0%,100%{ transform: translateY(0); }
+    50%{ transform: translateY(-8px); }
+  }
+  @keyframes targetPulse{
+    0%,100%{ transform: scale(1); opacity: 1; }
+    50%{ transform: scale(1.1); opacity: .8; }
+  }
+  @keyframes eggFloat{
+    0%,100%{ transform: translateY(0) rotate(-3deg); }
+    50%{ transform: translateY(-6px) rotate(3deg); }
+  }
+  @keyframes rpsFlash{
+    0%,100%{ transform: scale(1); }
+    50%{ transform: scale(1.15); }
+  }
+
   /* ===== Footer ===== */
   .footer{
     margin-top: 16px;
