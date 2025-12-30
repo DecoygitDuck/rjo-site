@@ -17,6 +17,7 @@ export function mountNeonTdMini(container) {
   let wave = 1;
   let gameOver = false;
   let selectedTower = null;
+  let selectedTowerType = "laser"; // Currently selected tower type to build
   let towers = [];
   let enemies = [];
   let projectiles = [];
@@ -29,10 +30,11 @@ export function mountNeonTdMini(container) {
     path.push({ x, y: pathY });
   }
 
-  // Tower types
+  // Tower types (matching actual game)
   const TOWER_TYPES = {
-    laser: { cost: 50, damage: 10, range: 3, fireRate: 30, color: "#00ffff" },
-    cannon: { cost: 80, damage: 25, range: 2.5, fireRate: 60, color: "#ff00ff" },
+    laser: { cost: 20, damage: 10, range: 2.6, fireRate: 30, color: "#00ffff", name: "Laser" },
+    cannon: { cost: 30, damage: 25, range: 3.0, fireRate: 60, color: "#ff00ff", name: "Cannon" },
+    frost: { cost: 25, damage: 5, range: 2.4, fireRate: 40, color: "#86d8ff", name: "Frost", slow: 0.5 },
   };
 
   class Tower {
@@ -61,7 +63,8 @@ export function mountNeonTdMini(container) {
             targetX: target.x,
             targetY: target.y,
             damage: this.spec.damage,
-            color: this.spec.color
+            color: this.spec.color,
+            slow: this.spec.slow || 0
           });
           this.cooldown = this.spec.fireRate;
         }
@@ -91,11 +94,13 @@ export function mountNeonTdMini(container) {
       this.y = pos.y * GRID_SIZE + GRID_SIZE / 2;
       this.hp = 50 + wave * 10;
       this.maxHp = this.hp;
-      this.speed = 1;
+      this.baseSpeed = 1;
+      this.slowFactor = 1; // 1 = normal, 0.5 = half speed
     }
 
     update() {
-      this.pathIndex += this.speed / GRID_SIZE;
+      this.slowFactor = 1; // Reset slow each frame
+      this.pathIndex += (this.baseSpeed * this.slowFactor) / GRID_SIZE;
 
       if (this.pathIndex >= path.length) {
         lives--;
@@ -169,10 +174,11 @@ export function mountNeonTdMini(container) {
       return;
     }
 
-    // Place laser tower if enough money
-    if (money >= TOWER_TYPES.laser.cost) {
-      towers.push(new Tower(gridX, gridY, "laser"));
-      money -= TOWER_TYPES.laser.cost;
+    // Place selected tower type if enough money
+    const towerSpec = TOWER_TYPES[selectedTowerType];
+    if (towerSpec && money >= towerSpec.cost) {
+      towers.push(new Tower(gridX, gridY, selectedTowerType));
+      money -= towerSpec.cost;
     }
   }
 
@@ -182,6 +188,12 @@ export function mountNeonTdMini(container) {
       if (!waveInProgress && enemies.length === 0) {
         spawnWave();
       }
+    } else if (e.key === "1") {
+      selectedTowerType = "laser";
+    } else if (e.key === "2") {
+      selectedTowerType = "cannon";
+    } else if (e.key === "3") {
+      selectedTowerType = "frost";
     }
   }
 
@@ -252,6 +264,9 @@ export function mountNeonTdMini(container) {
         });
         if (hitEnemy) {
           hitEnemy.hp -= p.damage;
+          if (p.slow) {
+            hitEnemy.slowFactor = p.slow;
+          }
           if (hitEnemy.hp <= 0) {
             money += 10;
           }
@@ -278,6 +293,25 @@ export function mountNeonTdMini(container) {
     ctx.fillText(`💰 ${money}`, 10, 20);
     ctx.fillText(`❤️ ${lives}`, 10, 40);
     ctx.fillText(`🌊 ${wave}`, 10, 60);
+
+    // Tower selection UI
+    ctx.font = "12px monospace";
+    const towerY = 90;
+    ["laser", "cannon", "frost"].forEach((type, i) => {
+      const spec = TOWER_TYPES[type];
+      const isSelected = type === selectedTowerType;
+      ctx.fillStyle = isSelected ? spec.color : "#ffffff66";
+      const canAfford = money >= spec.cost;
+      if (!canAfford) ctx.fillStyle = "#ff005033";
+
+      const text = `[${i+1}] ${spec.name} $${spec.cost}`;
+      ctx.fillText(text, 10, towerY + i * 18);
+
+      if (isSelected) {
+        ctx.fillStyle = spec.color;
+        ctx.fillRect(5, towerY + i * 18 - 10, 2, 12);
+      }
+    });
 
     if (!waveInProgress && enemies.length === 0) {
       ctx.fillStyle = "#00ff8a";
