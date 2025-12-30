@@ -1,40 +1,87 @@
-// Egg Mini - Arena survival game for demo
+// Egg Mini - Tron-style trail duel for demo
 export function mountEggMini(container) {
   const canvas = document.createElement("canvas");
   canvas.width = 600;
   canvas.height = 400;
-  canvas.style.cssText = "width:100%;height:100%;object-fit:contain;background:#000;";
+  canvas.style.cssText = "width:100%;height:100%;object-fit:contain;background:#070812;";
   canvas.tabIndex = 0;
   container.appendChild(canvas);
 
   const ctx = canvas.getContext("2d");
 
-  let player = {
-    x: canvas.width / 2,
-    y: canvas.height / 2,
-    vx: 0,
-    vy: 0,
-    angle: 0,
-    boost: 0,
-    alive: true,
-    size: 12
-  };
+  const CELL = 8;
+  const COLS = Math.floor(canvas.width / CELL);
+  const ROWS = Math.floor(canvas.height / CELL);
 
-  let enemies = [];
+  const PLAYER_COLOR = "#7cffe6";
+  const BOT_COLOR = "#ff4d6d";
+
+  const DIRS = [
+    { x: 1, y: 0 },   // RIGHT
+    { x: -1, y: 0 },  // LEFT
+    { x: 0, y: 1 },   // DOWN
+    { x: 0, y: -1 }   // UP
+  ];
+
+  function isOpposite(a, b) {
+    return a.x === -b.x && a.y === -b.y;
+  }
+
+  let occ = new Uint8Array(COLS * ROWS); // 0=empty, 1=player, 2=bot
+  let player = { x: Math.floor(COLS * 0.25), y: Math.floor(ROWS / 2), dir: DIRS[0], pending: null, boost: 1.0, boosting: false };
+  let bot = { x: Math.floor(COLS * 0.75), y: Math.floor(ROWS / 2), dir: DIRS[1], boost: 1.0, boosting: false };
+
   let score = 0;
+  let dead = false;
   let keys = {};
-  let gameTime = 0;
+  let lastFrame = performance.now();
+  let accPlayer = 0;
+  let accBot = 0;
 
-  function spawnEnemy() {
-    const side = Math.floor(Math.random() * 4);
-    let x, y;
+  const BASE_SPEED = 8; // cells per second
+  const BOOST_MULT = 1.8;
 
-    if (side === 0) { x = Math.random() * canvas.width; y = -20; }
-    else if (side === 1) { x = canvas.width + 20; y = Math.random() * canvas.height; }
-    else if (side === 2) { x = Math.random() * canvas.width; y = canvas.height + 20; }
-    else { x = -20; y = Math.random() * canvas.height; }
+  function idx(x, y) { return y * COLS + x; }
+  function inBounds(x, y) { return x >= 0 && y >= 0 && x < COLS && y < ROWS; }
+  function getOcc(x, y) { return occ[idx(x, y)]; }
+  function setOcc(x, y, v) { occ[idx(x, y)] = v; }
 
-    enemies.push({ x, y, vx: 0, vy: 0, size: 10, speed: 1 + gameTime / 1000 });
+  // Initialize starting positions
+  setOcc(player.x, player.y, 1);
+  setOcc(bot.x, bot.y, 2);
+
+  // Simple AI - chase player with lookahead
+  function chooseBotDir() {
+    const options = DIRS.filter(d => !isOpposite(bot.dir, d));
+    let best = bot.dir;
+    let bestScore = -Infinity;
+
+    for (const d of options) {
+      const nx = bot.x + d.x;
+      const ny = bot.y + d.y;
+
+      if (!inBounds(nx, ny) || getOcc(nx, ny) !== 0) continue;
+
+      // Distance to player
+      const dist = Math.abs(nx - player.x) + Math.abs(ny - player.y);
+
+      // Lookahead danger
+      let danger = 0;
+      for (let i = 1; i <= 3; i++) {
+        const lx = nx + d.x * i;
+        const ly = ny + d.y * i;
+        if (!inBounds(lx, ly)) { danger += 3; break; }
+        if (getOcc(lx, ly) !== 0) danger += 2;
+      }
+
+      const sc = -dist - danger * 4;
+      if (sc > bestScore) {
+        bestScore = sc;
+        best = d;
+      }
+    }
+
+    return best;
   }
 
   function handleKeyDown(e) {
@@ -42,6 +89,13 @@ export function mountEggMini(container) {
       e.preventDefault();
     }
     keys[e.key] = true;
+
+    if (dead) return;
+
+    if (e.key === "ArrowUp") player.pending = DIRS[3];
+    else if (e.key === "ArrowDown") player.pending = DIRS[2];
+    else if (e.key === "ArrowLeft") player.pending = DIRS[1];
+    else if (e.key === "ArrowRight") player.pending = DIRS[0];
   }
 
   function handleKeyUp(e) {
@@ -51,153 +105,180 @@ export function mountEggMini(container) {
   canvas.addEventListener("keydown", handleKeyDown);
   canvas.addEventListener("keyup", handleKeyUp);
 
-  let spawnTimer = 0;
-  let animationId;
+  function step() {
+    const pReady = accPlayer >= 1;
+    const bReady = accBot >= 1;
 
-  function gameLoop() {
-    if (!player.alive) {
+    if (!pReady && !bReady) return false;
+
+    let pDir = player.dir;
+    if (pReady && player.pending) {
+      if (!isOpposite(player.dir, player.pending)) {
+        pDir = player.pending;
+        player.dir = pDir;
+      }
+      player.pending = null;
+    }
+
+    let bDir = bot.dir;
+    if (bReady) {
+      bDir = chooseBotDir();
+      bot.dir = bDir;
+    }
+
+    if (pReady && bReady) {
+      accPlayer -= 1;
+      accBot -= 1;
+
+      const nxP = player.x + pDir.x, nyP = player.y + pDir.y;
+      const nxB = bot.x + bDir.x, nyB = bot.y + bDir.y;
+
+      // Head-on collision
+      if (nxP === nxB && nyP === nyB) { dead = true; return true; }
+
+      // Wall collision
+      if (!inBounds(nxP, nyP)) { dead = true; return true; }
+      if (!inBounds(nxB, nyB)) { /* bot hit wall - player wins but still end */ dead = true; return true; }
+
+      // Trail collision
+      if (getOcc(nxP, nyP) !== 0) { dead = true; return true; }
+      if (getOcc(nxB, nyB) !== 0) { /* bot hit trail - player wins */ dead = true; return true; }
+
+      player.x = nxP; player.y = nyP;
+      bot.x = nxB; bot.y = nyB;
+      setOcc(nxP, nyP, 1);
+      setOcc(nxB, nyB, 2);
+      score++;
+      return true;
+    }
+
+    if (pReady) {
+      accPlayer -= 1;
+      const nx = player.x + pDir.x, ny = player.y + pDir.y;
+      if (!inBounds(nx, ny) || getOcc(nx, ny) !== 0) { dead = true; return true; }
+      player.x = nx; player.y = ny;
+      setOcc(nx, ny, 1);
+      score++;
+      return true;
+    }
+
+    accBot -= 1;
+    const nx = bot.x + bDir.x, ny = bot.y + bDir.y;
+    if (!inBounds(nx, ny) || getOcc(nx, ny) !== 0) { dead = true; return true; }
+    bot.x = nx; bot.y = ny;
+    setOcc(nx, ny, 2);
+    return true;
+  }
+
+  let animationId;
+  function gameLoop(t) {
+    const dt = Math.min(0.05, (t - lastFrame) / 1000);
+    lastFrame = t;
+
+    // Boost logic
+    player.boosting = keys[" "] && player.boost > 0 && !dead;
+    if (player.boosting) {
+      player.boost = Math.max(0, player.boost - 0.5 * dt);
+    } else {
+      player.boost = Math.min(1.0, player.boost + 0.3 * dt);
+    }
+
+    if (!dead) {
+      const playerSpeed = BASE_SPEED * (player.boosting ? BOOST_MULT : 1);
+      const botSpeed = BASE_SPEED;
+
+      accPlayer += dt * playerSpeed;
+      accBot += dt * botSpeed;
+
+      let steps = 0;
+      while (!dead && steps < 20) {
+        const did = step();
+        if (!did) break;
+        steps++;
+      }
+    }
+
+    // Draw
+    ctx.fillStyle = "#070812";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw grid
+    ctx.strokeStyle = "#00ffff11";
+    ctx.lineWidth = 1;
+    for (let x = 0; x <= COLS; x++) {
+      ctx.beginPath();
+      ctx.moveTo(x * CELL, 0);
+      ctx.lineTo(x * CELL, canvas.height);
+      ctx.stroke();
+    }
+    for (let y = 0; y <= ROWS; y++) {
+      ctx.beginPath();
+      ctx.moveTo(0, y * CELL);
+      ctx.lineTo(canvas.width, y * CELL);
+      ctx.stroke();
+    }
+
+    // Draw trails
+    for (let y = 0; y < ROWS; y++) {
+      for (let x = 0; x < COLS; x++) {
+        const v = getOcc(x, y);
+        if (v === 1) {
+          ctx.fillStyle = PLAYER_COLOR;
+          ctx.fillRect(x * CELL, y * CELL, CELL, CELL);
+        } else if (v === 2) {
+          ctx.fillStyle = BOT_COLOR;
+          ctx.fillRect(x * CELL, y * CELL, CELL, CELL);
+        }
+      }
+    }
+
+    // Draw player head
+    ctx.fillStyle = "#ffffff";
+    ctx.shadowBlur = player.boosting ? 16 : 10;
+    ctx.shadowColor = PLAYER_COLOR;
+    ctx.beginPath();
+    ctx.ellipse(player.x * CELL + CELL / 2, player.y * CELL + CELL / 2, CELL * 0.5, CELL * 0.7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Draw bot head
+    ctx.fillStyle = "#ffffff";
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = BOT_COLOR;
+    ctx.beginPath();
+    ctx.ellipse(bot.x * CELL + CELL / 2, bot.y * CELL + CELL / 2, CELL * 0.5, CELL * 0.7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // UI
+    ctx.fillStyle = "#00ffff";
+    ctx.font = "14px monospace";
+    ctx.fillText(`Score: ${score}`, 10, 20);
+    ctx.fillText(`Boost: ${Math.round(player.boost * 100)}%`, 10, 40);
+
+    if (dead) {
       ctx.fillStyle = "#00000088";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = "#7cffe6";
-      ctx.font = "bold 32px Arial";
+      ctx.font = "bold 28px monospace";
       ctx.textAlign = "center";
-      ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
-      ctx.font = "18px Arial";
-      ctx.fillText(`Score: ${score}`, canvas.width / 2, canvas.height / 2 + 40);
-      ctx.fillText("Refresh to play again", canvas.width / 2, canvas.height / 2 + 70);
+      ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 10);
+      ctx.font = "16px monospace";
+      ctx.fillText(`Score: ${score}`, canvas.width / 2, canvas.height / 2 + 20);
       ctx.textAlign = "left";
       return;
     }
 
-    gameTime++;
-    spawnTimer++;
-
-    // Spawn enemies
-    if (spawnTimer > 60 - Math.min(gameTime / 100, 40)) {
-      spawnEnemy();
-      spawnTimer = 0;
-    }
-
-    // Player input
-    if (keys["ArrowLeft"]) player.angle -= 0.08;
-    if (keys["ArrowRight"]) player.angle += 0.08;
-
-    if (keys["ArrowUp"] || keys[" "]) {
-      player.boost = Math.min(player.boost + 0.3, 8);
-      const boostForce = 0.3;
-      player.vx += Math.cos(player.angle) * boostForce;
-      player.vy += Math.sin(player.angle) * boostForce;
-    } else {
-      player.boost *= 0.95;
-    }
-
-    // Apply friction
-    player.vx *= 0.98;
-    player.vy *= 0.98;
-
-    // Speed limit
-    const speed = Math.sqrt(player.vx * player.vx + player.vy * player.vy);
-    if (speed > 10) {
-      player.vx = (player.vx / speed) * 10;
-      player.vy = (player.vy / speed) * 10;
-    }
-
-    player.x += player.vx;
-    player.y += player.vy;
-
-    // Arena boundaries (bounce)
-    const margin = 30;
-    if (player.x < margin) { player.x = margin; player.vx *= -0.5; }
-    if (player.x > canvas.width - margin) { player.x = canvas.width - margin; player.vx *= -0.5; }
-    if (player.y < margin) { player.y = margin; player.vy *= -0.5; }
-    if (player.y > canvas.height - margin) { player.y = canvas.height - margin; player.vy *= -0.5; }
-
-    // Update enemies
-    enemies.forEach(e => {
-      const dx = player.x - e.x;
-      const dy = player.y - e.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-
-      if (dist > 0) {
-        e.vx = (dx / dist) * e.speed;
-        e.vy = (dy / dist) * e.speed;
-      }
-
-      e.x += e.vx;
-      e.y += e.vy;
-
-      // Check collision with player
-      if (dist < player.size + e.size) {
-        player.alive = false;
-      }
-    });
-
-    // Remove off-screen enemies (shouldn't happen but just in case)
-    enemies = enemies.filter(e =>
-      e.x > -50 && e.x < canvas.width + 50 &&
-      e.y > -50 && e.y < canvas.height + 50
-    );
-
-    score = Math.floor(gameTime / 10);
-
-    // Draw
-    ctx.fillStyle = "#000";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Arena boundary
-    ctx.strokeStyle = "#7cffe633";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
-
-    // Enemies
-    enemies.forEach(e => {
-      ctx.fillStyle = "#ff3344";
-      ctx.shadowBlur = 15;
-      ctx.shadowColor = "#ff3344";
-      ctx.beginPath();
-      ctx.ellipse(e.x, e.y, e.size, e.size * 1.3, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.shadowBlur = 0;
-    });
-
-    // Player
-    ctx.save();
-    ctx.translate(player.x, player.y);
-    ctx.rotate(player.angle);
-
-    ctx.fillStyle = "#7cffe6";
-    ctx.shadowBlur = 20 + player.boost * 2;
-    ctx.shadowColor = "#7cffe6";
-    ctx.beginPath();
-    ctx.ellipse(0, 0, player.size, player.size * 1.4, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-
-    // Boost trail
-    if (player.boost > 2) {
-      ctx.fillStyle = `rgba(124, 255, 230, ${player.boost / 20})`;
-      ctx.beginPath();
-      ctx.ellipse(-player.size, 0, 6, 8, 0, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    ctx.restore();
-
-    // UI
-    ctx.fillStyle = "#7cffe6";
-    ctx.font = "bold 18px monospace";
-    ctx.fillText(`⭐ ${score}`, 10, 30);
-    ctx.fillText(`👾 ${enemies.length}`, 10, 55);
-
     ctx.fillStyle = "#7cffe699";
-    ctx.font = "12px monospace";
-    ctx.fillText("← → to rotate, ↑ / SPACE to boost", 10, canvas.height - 10);
+    ctx.font = "11px monospace";
+    ctx.fillText("Arrows to move · Space to boost", 10, canvas.height - 10);
 
     animationId = requestAnimationFrame(gameLoop);
   }
 
   canvas.focus();
-  gameLoop();
+  lastFrame = performance.now();
+  gameLoop(lastFrame);
 
   return {
     destroy: () => {
