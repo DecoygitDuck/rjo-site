@@ -486,6 +486,19 @@
     0%,100%{ transform: scale(1); }
     50%{ transform: scale(1.15); }
   }
+  @keyframes towerPulse{
+    0%,100%{ box-shadow: 0 0 16px rgba(0,255,255,.5); }
+    50%{ box-shadow: 0 0 24px rgba(0,255,255,.9); }
+  }
+  @keyframes beamFlash{
+    0%,100%{ opacity: 0; width: 2px; }
+    50%{ opacity: 1; width: 50px; }
+  }
+  @keyframes enemyMove{
+    0%{ transform: translateX(0) scale(1); }
+    50%{ transform: translateX(8px) scale(0.95); }
+    100%{ transform: translateX(0) scale(1); }
+  }
 
   /* ===== Footer ===== */
   .footer{
