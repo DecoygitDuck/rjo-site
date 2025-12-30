@@ -194,16 +194,42 @@ export function termRun(raw){
       break;
     case "open":
       if(!arg1){ termPrint("usage: open <app>  (try: list)", "err"); break; }
-      if(!openApp(arg1, "open")) termPrint(`unknown app: ${arg1}`, "err");
+      // Try exact match first, then fuzzy match
+      let appKey = arg1;
+      if(!APPS[appKey]){
+        const keys = Object.keys(APPS);
+        const fuzzyMatch = (query, target) => {
+          let qi = 0;
+          for(let ti = 0; ti < target.length && qi < query.length; ti++){
+            if(target[ti] === query[qi]) qi++;
+          }
+          return qi === query.length;
+        };
+        appKey = keys.find(k => k.startsWith(arg1)) || keys.find(k => fuzzyMatch(arg1, k)) || arg1;
+      }
+      if(!openApp(appKey, "open")) termPrint(`unknown app: ${arg1}`, "err");
       break;
     case "demo":
       if(!arg1){ termPrint("usage: demo <app>  (try: list)", "err"); break; }
-      if(APPS[arg1]){
-        const card = document.querySelector(`article.card[data-app="${arg1}"]`);
+      // Try exact match first, then fuzzy match
+      let demoKey = arg1;
+      if(!APPS[demoKey]){
+        const keys = Object.keys(APPS);
+        const fuzzyMatch = (query, target) => {
+          let qi = 0;
+          for(let ti = 0; ti < target.length && qi < query.length; ti++){
+            if(target[ti] === query[qi]) qi++;
+          }
+          return qi === query.length;
+        };
+        demoKey = keys.find(k => k.startsWith(arg1)) || keys.find(k => fuzzyMatch(arg1, k)) || arg1;
+      }
+      if(APPS[demoKey]){
+        const card = document.querySelector(`article.card[data-app="${demoKey}"]`);
         if(card) spark(card);
-        termPrint(`launching ${APPS[arg1].name} demo...`, "m");
+        termPrint(`launching ${APPS[demoKey].name} demo...`, "m");
         // Open the demo (works in both terminal and boring modes now)
-        setTimeout(() => openDemo(arg1), 150);
+        setTimeout(() => openDemo(demoKey), 150);
       } else {
         termPrint(`unknown app: ${arg1}`, "err");
       }
