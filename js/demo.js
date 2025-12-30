@@ -222,7 +222,7 @@ function openFullscreenDemo(appKey){
     muted = false;
     sm(muted);
     if(muteBtn) muteBtn.textContent = muted ? "Unmute" : "Mute";
-    if(hintEl) hintEl.textContent = "Click to place laser towers · SPACE for next wave · Defend the path!";
+    if(hintEl) hintEl.textContent = "Keys 1/2/3 select tower · Click to place · SPACE for next wave";
     overlay.classList.add("show-hint");
   } else if(appKey === "wordbeat"){
     const { destroy, setMuted: sm, needsGesture } = mountWordbeatMini(vp);
@@ -230,7 +230,7 @@ function openFullscreenDemo(appKey){
     muted = false;
     sm(muted);
     if(muteBtn) muteBtn.textContent = muted ? "Unmute" : "Mute";
-    if(hintEl) hintEl.textContent = "Type the words as fast as you can · Build combos for bonus points!";
+    if(hintEl) hintEl.textContent = "Type lyrics to create patterns · SPACE to play/pause · Same text = same pattern";
     overlay.classList.add("show-hint");
   } else if(appKey === "hophop"){
     const { destroy, setMuted: sm, needsGesture } = mountHopHopMini(vp);
@@ -347,7 +347,7 @@ function openHeroDemo(appKey){
     sm(muted);
     const mb = getMuteBtn();
     if(mb) mb.textContent = muted ? "Unmute" : "Mute";
-    setHint(true, "Click to place towers · SPACE for next wave");
+    setHint(true, "Keys 1/2/3 select tower · Click to build · SPACE = wave");
   } else if(appKey === "wordbeat"){
     const { destroy, setMuted: sm, needsGesture } = mountWordbeatMini(vp);
     cleanup = destroy;
@@ -355,7 +355,7 @@ function openHeroDemo(appKey){
     sm(muted);
     const mb = getMuteBtn();
     if(mb) mb.textContent = muted ? "Unmute" : "Mute";
-    setHint(true, "Type the words fast · Build combos!");
+    setHint(true, "Type lyrics to generate patterns · SPACE = play/pause");
   } else if(appKey === "hophop"){
     const { destroy, setMuted: sm, needsGesture } = mountHopHopMini(vp);
     cleanup = destroy;
