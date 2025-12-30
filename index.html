@@ -274,10 +274,17 @@
         </div>
         <div class="desc">Neon tower defense. Build towers, upgrade firepower, survive waves. Spawn points shift every round.</div>
         <div class="preview" aria-label="Neon TD preview">
-          <div style="display:flex;gap:20px;align-items:center;justify-content:center;position:relative;">
-            <div style="width:24px;height:24px;background:rgba(0,255,255,.15);border:2px solid rgba(0,255,255,.7);box-shadow:0 0 16px rgba(0,255,255,.5);animation:towerPulse 1.2s ease-in-out infinite;"></div>
-            <div style="position:absolute;width:2px;height:2px;background:rgba(0,255,255,.9);box-shadow:0 0 8px rgba(0,255,255,.8);left:50%;top:50%;transform:translate(-50%,-50%);animation:beamFlash 1.2s ease-in-out infinite;"></div>
-            <div style="width:16px;height:16px;background:rgba(255,0,255,.9);border-radius:50%;box-shadow:0 0 12px rgba(255,0,255,.6);animation:enemyMove 2s ease-in-out infinite;"></div>
+          <div class="neonTdPreview">
+            <div class="tdGrid"></div>
+            <div class="tdPath"></div>
+            <div class="tdTower">
+              <div class="tdUpgradeRing"></div>
+              <div class="tdCore"></div>
+            </div>
+            <div class="tdBeam"></div>
+            <div class="tdEnemy td1"></div>
+            <div class="tdEnemy td2"></div>
+            <div class="tdSpawn"></div>
           </div>
         </div>
         <div class="cardActions">

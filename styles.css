@@ -500,6 +500,129 @@
     100%{ transform: translateX(0) scale(1); }
   }
 
+  /* Neon TD Preview */
+  .neonTdPreview{
+    position:relative;
+    width:100%;
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background: #070012;
+  }
+  .tdGrid{
+    position:absolute;
+    inset:0;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(0,255,255,.06) 19px, rgba(0,255,255,.06) 20px),
+      repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(0,255,255,.06) 19px, rgba(0,255,255,.06) 20px);
+    opacity:.35;
+  }
+  .tdPath{
+    position:absolute;
+    left:20%;
+    top:35%;
+    width:60%;
+    height:30%;
+    background: rgba(18,0,32,.88);
+    border-radius:4px;
+    box-shadow: 0 0 20px rgba(255,0,255,.15);
+  }
+  .tdTower{
+    position:relative;
+    width:32px;
+    height:32px;
+    background: rgba(0,255,255,.08);
+    border:2px solid rgba(0,255,255,.75);
+    box-shadow: 0 0 18px rgba(0,255,255,.5), inset 0 0 10px rgba(0,255,255,.12);
+    z-index:3;
+    animation: tdTowerGlow 1.5s ease-in-out infinite;
+  }
+  .tdUpgradeRing{
+    position:absolute;
+    inset:-6px;
+    border-radius:50%;
+    border:2px solid transparent;
+    border-top-color: rgba(255,0,80,.7);
+    border-right-color: rgba(255,107,0,.7);
+    animation: tdRingSpin 3s linear infinite;
+  }
+  .tdCore{
+    position:absolute;
+    left:50%;
+    top:50%;
+    width:8px;
+    height:8px;
+    transform:translate(-50%,-50%);
+    background: rgba(255,255,255,.85);
+    border-radius:50%;
+    box-shadow: 0 0 10px rgba(0,255,255,.9);
+  }
+  .tdBeam{
+    position:absolute;
+    left:50%;
+    top:50%;
+    width:0px;
+    height:2px;
+    background: linear-gradient(90deg, rgba(0,255,255,.95), transparent);
+    transform-origin: left center;
+    animation: tdBeamShoot 1.2s ease-in-out infinite;
+    z-index:2;
+    filter: drop-shadow(0 0 4px rgba(0,255,255,.8));
+  }
+  .tdEnemy{
+    position:absolute;
+    width:14px;
+    height:14px;
+    border-radius:50%;
+    background: rgba(255,0,255,.9);
+    box-shadow: 0 0 14px rgba(255,0,255,.7);
+    z-index:1;
+  }
+  .tdEnemy.td1{
+    left:25%;
+    top:50%;
+    animation: tdEnemyPath1 2.5s ease-in-out infinite;
+  }
+  .tdEnemy.td2{
+    left:30%;
+    top:50%;
+    animation: tdEnemyPath1 2.5s ease-in-out infinite .8s;
+  }
+  .tdSpawn{
+    position:absolute;
+    left:15%;
+    top:50%;
+    width:20px;
+    height:20px;
+    border-radius:50%;
+    border:2px solid rgba(255,0,255,.6);
+    transform:translate(-50%,-50%);
+    animation: tdSpawnPulse 1.8s ease-in-out infinite;
+    z-index:0;
+  }
+  @keyframes tdTowerGlow{
+    0%,100%{ box-shadow: 0 0 16px rgba(0,255,255,.5), inset 0 0 10px rgba(0,255,255,.12); }
+    50%{ box-shadow: 0 0 28px rgba(0,255,255,.8), inset 0 0 18px rgba(0,255,255,.22); }
+  }
+  @keyframes tdRingSpin{
+    from{ transform: rotate(0deg); }
+    to{ transform: rotate(360deg); }
+  }
+  @keyframes tdBeamShoot{
+    0%,100%{ width:0px; opacity:0; }
+    15%,85%{ width:45px; opacity:1; }
+  }
+  @keyframes tdEnemyPath1{
+    0%{ transform: translateX(0) translateY(0); }
+    50%{ transform: translateX(40px) translateY(-5px); }
+    100%{ transform: translateX(80px) translateY(0); }
+  }
+  @keyframes tdSpawnPulse{
+    0%,100%{ transform: translate(-50%,-50%) scale(.8); opacity:.4; }
+    50%{ transform: translate(-50%,-50%) scale(1.2); opacity:.8; }
+  }
+
   /* ===== Footer ===== */
   .footer{
     margin-top: 16px;
@@ -561,7 +684,8 @@
   }
   /* Reduce motion for users who prefer it */
   @media (prefers-reduced-motion: reduce){
-    .siteSphere, .miniSphere, .miniCube, .hopper{ animation: none !important; }
+    .siteSphere, .miniSphere, .miniCube, .hopper,
+    .tdTower, .tdUpgradeRing, .tdBeam, .tdEnemy, .tdSpawn{ animation: none !important; }
     .nav a:hover, .btn:hover, .link:hover, .card:hover{ transform:none; }
   }
 
