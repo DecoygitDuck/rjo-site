@@ -238,7 +238,7 @@ function openFullscreenDemo(appKey){
     muted = false;
     sm(muted);
     if(muteBtn) muteBtn.textContent = muted ? "Unmute" : "Mute";
-    if(hintEl) hintEl.textContent = "← → to move · SPACE to jump · Collect all coins!";
+    if(hintEl) hintEl.textContent = "← → to move · SPACE to jump · Wall-kick off sides to climb higher!";
     overlay.classList.add("show-hint");
   } else if(appKey === "egg"){
     const { destroy, setMuted: sm, needsGesture } = mountEggMini(vp);
@@ -246,7 +246,7 @@ function openFullscreenDemo(appKey){
     muted = false;
     sm(muted);
     if(muteBtn) muteBtn.textContent = muted ? "Unmute" : "Mute";
-    if(hintEl) hintEl.textContent = "← → to rotate · ↑ / SPACE to boost · Survive as long as possible!";
+    if(hintEl) hintEl.textContent = "Arrows to move · Space to boost · Don't hit trails or walls!";
     overlay.classList.add("show-hint");
   } else {
     const d = document.createElement("div");
@@ -363,7 +363,7 @@ function openHeroDemo(appKey){
     sm(muted);
     const mb = getMuteBtn();
     if(mb) mb.textContent = muted ? "Unmute" : "Mute";
-    setHint(true, "← → move · SPACE jump · Collect coins");
+    setHint(true, "← → move · SPACE jump · Climb high!");
   } else if(appKey === "egg"){
     const { destroy, setMuted: sm, needsGesture } = mountEggMini(vp);
     cleanup = destroy;
@@ -371,7 +371,7 @@ function openHeroDemo(appKey){
     sm(muted);
     const mb = getMuteBtn();
     if(mb) mb.textContent = muted ? "Unmute" : "Mute";
-    setHint(true, "← → rotate · ↑ boost · Survive!");
+    setHint(true, "Arrows move · Space boost · Trail duel!");
   } else {
     const d = document.createElement("div");
     d.style.cssText = "width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.82);font:600 12px/1.2 var(--font-main);letter-spacing:.02em;";
