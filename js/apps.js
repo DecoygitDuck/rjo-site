@@ -10,6 +10,7 @@ export const APPS = {
   thumbshooter: { name: "THUMBSHOOTER", href: "thumbshooter.html", tag: "LIVE" },
   egg:        { name: "EGG",        href: "egg.html",         tag: "LIVE"  },
   rpsduo:     { name: "RPSDUO",     href: "rpsduo.html",      tag: "LIVE"  },
+  neon_td:    { name: "NEON TD",    href: "neon_td.html",     tag: "LIVE"  },
 
   // secret terminal-only apps
   notes:      { name: "NOTES",      href: "terminalnotes.html", tag: "HIDDEN" },
