@@ -67,6 +67,35 @@ button.good{border-color:rgba(0,255,138,0.70);color:var(--ok);box-shadow:0 0 10p
 button.danger{border-color:rgba(255,0,80,0.70);color:var(--bad);box-shadow:0 0 10px rgba(255,0,80,0.22);}
 button:disabled{opacity:0.45;filter:grayscale(35%);cursor:not-allowed;transform:none;box-shadow:none;}
 
+/* Back to homepage button */
+#backBtn{
+  position:absolute; right:14px; top:14px;
+  padding:10px 14px;
+  background:rgba(0,0,0,0.55);
+  border:1px solid rgba(0,255,255,0.70);
+  border-radius:12px;
+  box-shadow:0 0 18px rgba(0,255,255,0.30);
+  color:var(--neon);
+  font-size:13px;
+  font-weight:700;
+  z-index:50;
+  pointer-events:auto;
+  cursor:pointer;
+  transition:transform .08s ease, box-shadow .15s ease;
+  text-decoration:none;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+#backBtn:hover{
+  box-shadow:0 0 24px rgba(0,255,255,0.50);
+  transform:translateY(-1px);
+}
+#backBtn:active{transform:scale(0.97);}
+@media (max-width:520px){
+  #backBtn{padding:8px 10px; font-size:12px; right:10px; top:10px;}
+}
+
 /* Floating action button (Shop) */
 #fab{
   position:absolute; right:14px; bottom:14px;
@@ -358,6 +387,11 @@ button[data-key]::after{
 <body>
 <div id="app">
   <canvas id="game"></canvas>
+
+  <a id="backBtn" href="index.html" title="Back to Homepage">
+    <span>←</span>
+    <span>Home</span>
+  </a>
 
   <div id="miniHud" aria-label="Mini status">
     <div class="mItem" id="mCash">$0</div>

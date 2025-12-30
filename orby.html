@@ -47,6 +47,35 @@
   --glow-cyan: 0 0 20px rgba(84,255,209,0.3), 0 0 40px rgba(84,255,209,0.1);
   --glow-purple: 0 0 20px rgba(167,139,250,0.3), 0 0 40px rgba(167,139,250,0.1);
   --glow-multi: 0 0 20px rgba(84,255,209,0.25), 0 0 40px rgba(167,139,250,0.15), 0 0 60px rgba(244,114,182,0.1);
+}
+
+/* Universal back button */
+#backToHome{
+  position:fixed; right:16px; top:16px;
+  padding:10px 16px;
+  background: var(--panel-bg, rgba(0,0,0,0.75));
+  backdrop-filter: blur(10px);
+  border:1px solid rgba(84,255,209,0.4);
+  border-radius:12px;
+  box-shadow: var(--glow-cyan, 0 0 20px rgba(84,255,209,0.2));
+  color: var(--accent-cyan, #54ffd1);
+  font: 600 13px/1 'Inter', sans-serif;
+  z-index:9999;
+  cursor:pointer;
+  transition:all .15s ease;
+  text-decoration:none;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+#backToHome:hover{
+  background: var(--panel-bg-solid, rgba(18,18,28,0.92));
+  box-shadow: 0 0 30px rgba(84,255,209,0.4);
+  transform:translateY(-1px);
+}
+#backToHome:active{transform:scale(0.97);}
+@media (max-width:640px){
+  #backToHome{padding:8px 12px; font-size:12px; right:12px; top:12px;}
 
   /* Safe areas */
   --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -1177,6 +1206,11 @@ button.btn::before{
 
 <body>
 <canvas id="gameCanvas"></canvas>
+
+<a id="backToHome" href="index.html" title="Back to Homepage">
+  <span>←</span>
+  <span>Home</span>
+</a>
 
 <div id="fieldPulse" aria-hidden="true"></div>
 
