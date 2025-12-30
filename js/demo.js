@@ -1,6 +1,10 @@
 import { mountOrbyMini } from "./orby-mini.js";
 import { mountCubeMini } from "./cube-mini.js";
 import { mountNcosMini } from "./ncos-mini.js";
+import { mountNeonTdMini } from "./neon-td-mini.js";
+import { mountWordbeatMini } from "./wordbeat-mini.js";
+import { mountHopHopMini } from "./hophop-mini.js";
+import { mountEggMini } from "./egg-mini.js";
 import { stopHeroAnimation, initHeroAnimation } from "./hero-animation.js";
 import { showLoading, hideLoading } from "./loading.js";
 
@@ -212,6 +216,38 @@ function openFullscreenDemo(appKey){
     if(muteBtn) muteBtn.textContent = muted ? "Unmute" : "Mute";
     if(hintEl) hintEl.textContent = "Click notes to edit · + to create · Filter by category · Pin favorites";
     overlay.classList.add("show-hint");
+  } else if(appKey === "neon_td"){
+    const { destroy, setMuted: sm, needsGesture } = mountNeonTdMini(vp);
+    cleanup = destroy;
+    muted = false;
+    sm(muted);
+    if(muteBtn) muteBtn.textContent = muted ? "Unmute" : "Mute";
+    if(hintEl) hintEl.textContent = "Click to place laser towers · SPACE for next wave · Defend the path!";
+    overlay.classList.add("show-hint");
+  } else if(appKey === "wordbeat"){
+    const { destroy, setMuted: sm, needsGesture } = mountWordbeatMini(vp);
+    cleanup = destroy;
+    muted = false;
+    sm(muted);
+    if(muteBtn) muteBtn.textContent = muted ? "Unmute" : "Mute";
+    if(hintEl) hintEl.textContent = "Type the words as fast as you can · Build combos for bonus points!";
+    overlay.classList.add("show-hint");
+  } else if(appKey === "hophop"){
+    const { destroy, setMuted: sm, needsGesture } = mountHopHopMini(vp);
+    cleanup = destroy;
+    muted = false;
+    sm(muted);
+    if(muteBtn) muteBtn.textContent = muted ? "Unmute" : "Mute";
+    if(hintEl) hintEl.textContent = "← → to move · SPACE to jump · Collect all coins!";
+    overlay.classList.add("show-hint");
+  } else if(appKey === "egg"){
+    const { destroy, setMuted: sm, needsGesture } = mountEggMini(vp);
+    cleanup = destroy;
+    muted = false;
+    sm(muted);
+    if(muteBtn) muteBtn.textContent = muted ? "Unmute" : "Mute";
+    if(hintEl) hintEl.textContent = "← → to rotate · ↑ / SPACE to boost · Survive as long as possible!";
+    overlay.classList.add("show-hint");
   } else {
     const d = document.createElement("div");
     d.style.cssText = "width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.82);font:600 14px/1.2 var(--font-main);letter-spacing:.02em;";
@@ -304,6 +340,38 @@ function openHeroDemo(appKey){
     const mb = getMuteBtn();
     if(mb) mb.textContent = muted ? "Unmute" : "Mute";
     setHint(true, "Click notes to edit · + to create · Filter by category");
+  } else if(appKey === "neon_td"){
+    const { destroy, setMuted: sm, needsGesture } = mountNeonTdMini(vp);
+    cleanup = destroy;
+    muted = false;
+    sm(muted);
+    const mb = getMuteBtn();
+    if(mb) mb.textContent = muted ? "Unmute" : "Mute";
+    setHint(true, "Click to place towers · SPACE for next wave");
+  } else if(appKey === "wordbeat"){
+    const { destroy, setMuted: sm, needsGesture } = mountWordbeatMini(vp);
+    cleanup = destroy;
+    muted = false;
+    sm(muted);
+    const mb = getMuteBtn();
+    if(mb) mb.textContent = muted ? "Unmute" : "Mute";
+    setHint(true, "Type the words fast · Build combos!");
+  } else if(appKey === "hophop"){
+    const { destroy, setMuted: sm, needsGesture } = mountHopHopMini(vp);
+    cleanup = destroy;
+    muted = false;
+    sm(muted);
+    const mb = getMuteBtn();
+    if(mb) mb.textContent = muted ? "Unmute" : "Mute";
+    setHint(true, "← → move · SPACE jump · Collect coins");
+  } else if(appKey === "egg"){
+    const { destroy, setMuted: sm, needsGesture } = mountEggMini(vp);
+    cleanup = destroy;
+    muted = false;
+    sm(muted);
+    const mb = getMuteBtn();
+    if(mb) mb.textContent = muted ? "Unmute" : "Mute";
+    setHint(true, "← → rotate · ↑ boost · Survive!");
   } else {
     const d = document.createElement("div");
     d.style.cssText = "width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.82);font:600 12px/1.2 var(--font-main);letter-spacing:.02em;";
