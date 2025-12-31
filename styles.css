@@ -623,6 +623,86 @@
     50%{ transform: translate(-50%,-50%) scale(1.2); opacity:.8; }
   }
 
+  /* Arena Preview */
+  .arenaPreview{
+    position:relative;
+    width:100%;
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background: #0a0511;
+    overflow:hidden;
+  }
+  .arenaPlayer{
+    position:relative;
+    width:24px;
+    height:24px;
+    background: radial-gradient(circle, rgba(60,255,107,1), rgba(60,255,107,.7));
+    border-radius:50%;
+    box-shadow: 0 0 16px rgba(60,255,107,.8);
+    z-index:3;
+    animation: arenaPlayerPulse 1.2s ease-in-out infinite;
+  }
+  .arenaEnemy{
+    position:absolute;
+    width:16px;
+    height:16px;
+    background: radial-gradient(circle, rgba(255,68,68,1), rgba(255,68,68,.7));
+    border-radius:2px;
+    box-shadow: 0 0 12px rgba(255,68,68,.6);
+    z-index:1;
+  }
+  .arenaEnemy.ae1{
+    top:25%;
+    left:30%;
+    animation: arenaEnemyFloat1 2s ease-in-out infinite;
+  }
+  .arenaEnemy.ae2{
+    top:60%;
+    right:25%;
+    animation: arenaEnemyFloat2 2.2s ease-in-out infinite .4s;
+  }
+  .arenaEnemy.ae3{
+    bottom:25%;
+    left:25%;
+    animation: arenaEnemyFloat3 2.4s ease-in-out infinite .8s;
+  }
+  .arenaShot{
+    position:absolute;
+    width:8px;
+    height:8px;
+    background: rgba(68,217,255,1);
+    border-radius:50%;
+    box-shadow: 0 0 10px rgba(68,217,255,.9);
+    z-index:2;
+    left:50%;
+    top:30%;
+    animation: arenaShotFly 1.5s linear infinite;
+  }
+  @keyframes arenaPlayerPulse{
+    0%,100%{ transform: scale(1); box-shadow: 0 0 16px rgba(60,255,107,.8); }
+    50%{ transform: scale(1.1); box-shadow: 0 0 22px rgba(60,255,107,1); }
+  }
+  @keyframes arenaEnemyFloat1{
+    0%,100%{ transform: translate(0,0) rotate(0deg); }
+    50%{ transform: translate(5px,-8px) rotate(5deg); }
+  }
+  @keyframes arenaEnemyFloat2{
+    0%,100%{ transform: translate(0,0) rotate(0deg); }
+    50%{ transform: translate(-6px,6px) rotate(-5deg); }
+  }
+  @keyframes arenaEnemyFloat3{
+    0%,100%{ transform: translate(0,0) rotate(0deg); }
+    50%{ transform: translate(8px,-5px) rotate(8deg); }
+  }
+  @keyframes arenaShotFly{
+    0%{ transform: translate(-50%,-50%) translateY(0) scale(0); opacity:0; }
+    10%{ transform: translate(-50%,-50%) translateY(0) scale(1); opacity:1; }
+    90%{ opacity:1; }
+    100%{ transform: translate(-50%,-50%) translateY(-40px) scale(.7); opacity:0; }
+  }
+
   /* ===== Footer ===== */
   .footer{
     margin-top: 16px;
