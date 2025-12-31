@@ -623,7 +623,7 @@
     50%{ transform: translate(-50%,-50%) scale(1.2); opacity:.8; }
   }
 
-  /* Arena Preview */
+  /* Arena Preview - Warrior vs different enemy types */
   .arenaPreview{
     position:relative;
     width:100%;
@@ -634,73 +634,99 @@
     background: #0a0511;
     overflow:hidden;
   }
+  /* Warrior player - green circle */
   .arenaPlayer{
     position:relative;
-    width:24px;
-    height:24px;
-    background: radial-gradient(circle, rgba(60,255,107,1), rgba(60,255,107,.7));
+    width:26px;
+    height:26px;
+    background: radial-gradient(circle, rgba(60,255,107,1), rgba(60,255,107,.75));
     border-radius:50%;
-    box-shadow: 0 0 16px rgba(60,255,107,.8);
+    box-shadow: 0 0 18px rgba(60,255,107,.9), 0 0 30px rgba(60,255,107,.4);
     z-index:3;
-    animation: arenaPlayerPulse 1.2s ease-in-out infinite;
+    animation: arenaPlayerPulse 1.4s ease-in-out infinite;
   }
   .arenaEnemy{
     position:absolute;
     width:16px;
     height:16px;
-    background: radial-gradient(circle, rgba(255,68,68,1), rgba(255,68,68,.7));
-    border-radius:2px;
-    box-shadow: 0 0 12px rgba(255,68,68,.6);
     z-index:1;
   }
+  /* Grunt - red square */
   .arenaEnemy.ae1{
-    top:25%;
-    left:30%;
-    animation: arenaEnemyFloat1 2s ease-in-out infinite;
+    top:20%;
+    left:28%;
+    background: radial-gradient(circle at 40% 40%, rgba(255,68,68,1), rgba(255,68,68,.8));
+    box-shadow: 0 0 14px rgba(255,136,136,.8);
+    animation: arenaEnemyFloat1 2.2s ease-in-out infinite;
   }
+  /* Runner - orange triangle */
   .arenaEnemy.ae2{
-    top:60%;
-    right:25%;
-    animation: arenaEnemyFloat2 2.2s ease-in-out infinite .4s;
+    top:62%;
+    right:22%;
+    width:0;
+    height:0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: 18px solid rgba(255,170,51,1);
+    filter: drop-shadow(0 0 12px rgba(255,204,119,.8));
+    animation: arenaEnemyFloat2 2s ease-in-out infinite .5s;
   }
+  /* Shooter - pink square */
   .arenaEnemy.ae3{
-    bottom:25%;
-    left:25%;
-    animation: arenaEnemyFloat3 2.4s ease-in-out infinite .8s;
+    bottom:22%;
+    left:24%;
+    background: radial-gradient(circle at 40% 40%, rgba(255,68,217,1), rgba(255,68,217,.8));
+    box-shadow: 0 0 14px rgba(255,136,238,.7);
+    animation: arenaEnemyFloat3 2.4s ease-in-out infinite 1s;
   }
   .arenaShot{
     position:absolute;
-    width:8px;
-    height:8px;
-    background: rgba(68,217,255,1);
+    width:9px;
+    height:9px;
+    background: radial-gradient(circle, rgba(68,217,255,1), rgba(68,217,255,.7));
     border-radius:50%;
-    box-shadow: 0 0 10px rgba(68,217,255,.9);
+    box-shadow: 0 0 12px rgba(68,217,255,1), 0 0 20px rgba(68,217,255,.5);
     z-index:2;
     left:50%;
-    top:30%;
-    animation: arenaShotFly 1.5s linear infinite;
+    top:28%;
+    animation: arenaShotFly 1.8s ease-out infinite;
   }
   @keyframes arenaPlayerPulse{
-    0%,100%{ transform: scale(1); box-shadow: 0 0 16px rgba(60,255,107,.8); }
-    50%{ transform: scale(1.1); box-shadow: 0 0 22px rgba(60,255,107,1); }
+    0%,100%{
+      transform: scale(1);
+      box-shadow: 0 0 18px rgba(60,255,107,.9), 0 0 30px rgba(60,255,107,.4);
+    }
+    50%{
+      transform: scale(1.15);
+      box-shadow: 0 0 24px rgba(60,255,107,1), 0 0 40px rgba(60,255,107,.6);
+    }
   }
   @keyframes arenaEnemyFloat1{
-    0%,100%{ transform: translate(0,0) rotate(0deg); }
-    50%{ transform: translate(5px,-8px) rotate(5deg); }
+    0%,100%{ transform: translate(0,0); }
+    50%{ transform: translate(6px,-10px); }
   }
   @keyframes arenaEnemyFloat2{
     0%,100%{ transform: translate(0,0) rotate(0deg); }
-    50%{ transform: translate(-6px,6px) rotate(-5deg); }
+    50%{ transform: translate(-8px,8px) rotate(-8deg); }
   }
   @keyframes arenaEnemyFloat3{
-    0%,100%{ transform: translate(0,0) rotate(0deg); }
-    50%{ transform: translate(8px,-5px) rotate(8deg); }
+    0%,100%{ transform: translate(0,0); }
+    50%{ transform: translate(10px,-6px); }
   }
   @keyframes arenaShotFly{
-    0%{ transform: translate(-50%,-50%) translateY(0) scale(0); opacity:0; }
-    10%{ transform: translate(-50%,-50%) translateY(0) scale(1); opacity:1; }
-    90%{ opacity:1; }
-    100%{ transform: translate(-50%,-50%) translateY(-40px) scale(.7); opacity:0; }
+    0%{
+      transform: translate(-50%,-50%) translateY(0) scale(0);
+      opacity:0;
+    }
+    15%{
+      transform: translate(-50%,-50%) translateY(0) scale(1);
+      opacity:1;
+    }
+    85%{ opacity:1; }
+    100%{
+      transform: translate(-50%,-50%) translateY(-50px) scale(.6);
+      opacity:0;
+    }
   }
 
   /* ===== Footer ===== */
