@@ -7,9 +7,52 @@
 <style>
   html,body{margin:0;padding:0;background:#0a0511;overflow:hidden;font-family:monospace}
   canvas{width:100vw;height:100vh;display:block;image-rendering:pixelated}
+
+  /* Back button */
+  #backToHome{
+    position:fixed;
+    right:16px;
+    top:16px;
+    padding:10px 16px;
+    background:rgba(26,26,46,0.85);
+    backdrop-filter:blur(10px);
+    border:1px solid rgba(0,255,136,0.3);
+    border-radius:12px;
+    box-shadow:0 4px 20px rgba(0,0,0,0.4), 0 0 20px rgba(0,255,136,0.1);
+    color:#00ff88;
+    text-decoration:none;
+    font-size:14px;
+    font-weight:700;
+    z-index:100;
+    transition:all 0.2s ease;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  #backToHome:hover{
+    background:rgba(0,255,136,0.15);
+    border-color:rgba(0,255,136,0.5);
+    box-shadow:0 6px 24px rgba(0,0,0,0.5), 0 0 30px rgba(0,255,136,0.2);
+    transform:translateY(-2px);
+  }
+  #backToHome:active{
+    transform:scale(0.97);
+  }
+  @media (max-width:640px){
+    #backToHome{
+      padding:8px 12px;
+      font-size:12px;
+      right:12px;
+      top:12px;
+    }
+  }
 </style>
 </head>
 <body>
+<a id="backToHome" href="index.html" title="Back to Homepage">
+  <span>←</span>
+  <span>Home</span>
+</a>
 <canvas id="c"></canvas>
 <script>
 (() => {
