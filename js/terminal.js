@@ -2,6 +2,7 @@ import { openDemo } from "./demo.js";
 import { APPS, CMDS } from "./apps.js";
 import { themes, setTheme } from "./themes.js";
 import { escapeHtml, spark } from "./utils.js";
+import { trackCommand, getDadJoke, getGreeting, enableArcadeMode, disableArcadeMode, enableDiscoMode, enableMatrixMode, enableZenMode, showCoffeeBreak } from "./arcade-features.js";
 
 let termOut = null;
 let termInput = null;
@@ -171,6 +172,10 @@ export function termRun(raw){
   const parts = input.split(/\s+/);
   const cmd = (parts[0] || "").toLowerCase();
   const arg1 = (parts[1] || "").toLowerCase();
+  
+  // Track command for achievements
+  trackCommand();
+  
   switch(cmd){
     case "help":
       termDivider();
@@ -183,6 +188,17 @@ export function termRun(raw){
       termPrint("  about | contact                (jump)", "m");
       termPrint("  theme <green|blue|amber|boring> (boring = full site transform)", "m");
       termPrint("  clear                          (wipe terminal)", "m");
+      termPrint("", "m");
+      termPrint("🎮 arcade commands:", "m");
+      termPrint("  arcade <on|off>                (toggle arcade mode)", "m");
+      termPrint("  coffee                         (take a coffee break)", "m");
+      termPrint("  disco                          (party mode!)", "m");
+      termPrint("  matrix                         (enter the matrix)", "m");
+      termPrint("  zen                            (calm mode)", "m");
+      termPrint("  joke                           (get a dad joke)", "m");
+      termPrint("  roll [dice]                    (roll dice, default d6)", "m");
+      termPrint("  time                           (check the time)", "m");
+      termPrint("  whoami                         (who are you?)", "m");
       break;
     case "list":
       termDivider();
@@ -253,6 +269,66 @@ export function termRun(raw){
       break;
     case "clear":
       if(termOut) termOut.innerHTML = "";
+      break;
+    case "coffee":
+      showCoffeeBreak();
+      termPrint("☕ Brewing coffee... Developer productivity +50%", "m");
+      break;
+    case "time":
+      const hour = new Date().getHours();
+      if (hour >= 22 || hour <= 6) termPrint("🌙 Night owl detected! Fellow late-night coder?", "m");
+      else if (hour >= 9 && hour <= 17) termPrint("☀️ Normal human hours. Impressive!", "m");
+      else termPrint("⏰ Current time: " + new Date().toLocaleTimeString(), "m");
+      break;
+    case "whoami":
+      termPrint("🤖 You're a curious visitor exploring rjo-dev's playground.", "m");
+      termPrint("Type 'sudo whoami' for more power...", "m");
+      break;
+    case "sudo":
+      if(arg1 === "whoami") termPrint("😎 Now you're a SUPER curious visitor! (No actual sudo powers granted)", "m");
+      else termPrint("Nice try! But you'll need real sudo for that.", "err");
+      break;
+    case "hack":
+      enableMatrixMode();
+      termPrint("🔓 Hacking the mainframe... Just kidding. Nice try though!", "m");
+      break;
+    case "dad-joke":
+    case "joke":
+      termPrint("😄 " + getDadJoke(), "m");
+      break;
+    case "roll":
+      const dice = parseInt(arg1) || 6;
+      const result = Math.floor(Math.random() * dice) + 1;
+      termPrint(`🎲 You rolled a ${result} (d${dice})`, "m");
+      break;
+    case "matrix":
+      enableMatrixMode();
+      termPrint("⚡ Entering the Matrix...", "m");
+      break;
+    case "disco":
+      enableDiscoMode();
+      termPrint("🕺 DISCO MODE ACTIVATED! Party time!", "m");
+      break;
+    case "meditate":
+    case "zen":
+      enableZenMode();
+      termPrint("🧘 Entering zen mode... Breathe in, breathe out.", "m");
+      break;
+    case "arcade":
+      if(arg1 === "on" || arg1 === "enable") {
+        enableArcadeMode();
+        termPrint("🎮 ARCADE MODE ACTIVATED! Insert coin to continue.dev", "m");
+      } else if(arg1 === "off" || arg1 === "disable") {
+        disableArcadeMode();
+        termPrint("Arcade mode disabled.", "m");
+      } else {
+        termPrint("usage: arcade <on|off>", "err");
+      }
+      break;
+    case "greeting":
+    case "hello":
+    case "hi":
+      termPrint(getGreeting(), "m");
       break;
     default:
       termPrint(`unknown command: ${cmd}  (try: help)`, "err");

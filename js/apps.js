@@ -19,4 +19,4 @@ export const APPS = {
   boom:       { name: "BOOM",       href: "boom.html",          tag: "HIDDEN" },
 };
 
-export const CMDS = ["help","list","open","demo","about","contact","clear","theme","ping"];
+export const CMDS = ["help","list","open","demo","about","contact","clear","theme","ping","arcade","coffee","disco","matrix","zen","joke","roll","time","whoami","sudo","hack","greeting","hello","hi"];
