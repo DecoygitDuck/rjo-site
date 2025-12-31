@@ -548,6 +548,23 @@
     player.y = clamp(y, 30, canvas.height - 30);
   }
 
+  // Keyboard controls
+  const keys = {};
+  const PLAYER_SPEED = 280; // px/s
+
+  addEventListener("keydown", (e) => {
+    if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) {
+      e.preventDefault();
+      keys[e.key] = true;
+    }
+  });
+  addEventListener("keyup", (e) => {
+    if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) {
+      keys[e.key] = false;
+    }
+  });
+
+  // Pointer controls
   canvas.addEventListener("pointerdown", (e) => {
     pointerActive = true;
     canvas.setPointerCapture(e.pointerId);
@@ -582,6 +599,23 @@
     last = now;
 
     if (started && !gameOver) {
+      // keyboard movement
+      if (!pointerActive) {
+        let dx = 0, dy = 0;
+        if (keys["ArrowLeft"]) dx -= 1;
+        if (keys["ArrowRight"]) dx += 1;
+        if (keys["ArrowUp"]) dy -= 1;
+        if (keys["ArrowDown"]) dy += 1;
+
+        if (dx !== 0 || dy !== 0) {
+          const mag = Math.sqrt(dx * dx + dy * dy);
+          player.x += (dx / mag) * PLAYER_SPEED * dt;
+          player.y += (dy / mag) * PLAYER_SPEED * dt;
+          player.x = clamp(player.x, 10, canvas.width - 10);
+          player.y = clamp(player.y, 30, canvas.height - 30);
+        }
+      }
+
       // wave timing
       waveTimer += dt * 1000;
       if (!inRest && waveTimer >= WAVE_MS) startRest();
