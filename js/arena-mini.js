@@ -1,29 +1,46 @@
-// Arena Mini - Fast-paced combat demo
+// Arena Mini - Roguelike combat demo matching the actual game
 export function mountArenaMini(container) {
   const canvas = document.createElement("canvas");
-  canvas.width = 600;
-  canvas.height = 400;
+  canvas.width = 700;
+  canvas.height = 450;
   canvas.style.cssText = "width:100%;height:100%;object-fit:contain;background:#0a0511;";
   canvas.tabIndex = 0;
   container.appendChild(canvas);
 
   const ctx = canvas.getContext("2d");
 
-  const PLAYER_COLOR = "#3cff6b";
-  const ENEMY_COLOR = "#ff4444";
-  const SHOT_COLOR = "#44d9ff";
+  // Colors matching actual game
+  const COLORS = {
+    warrior: { primary: "#3cff6b", secondary: "#2acc50", glow: "#1a9939" },
+    grunt: { body: "#ff4444", glow: "#ff8888" },
+    runner: { body: "#ffaa33", glow: "#ffcc77" },
+    shooter: { body: "#ff44d9", glow: "#ff88ee" },
+    tank: { body: "#991111", glow: "#dd4444" },
+    shot: "#44d9ff",
+    ui: { text: "#e0e0ff", health: "#00ff44", healthLow: "#ff3333" }
+  };
 
   let player = {
     x: canvas.width / 2,
     y: canvas.height / 2,
     vx: 0,
     vy: 0,
-    speed: 4.5,
-    size: 16,
-    hp: 100,
-    maxHp: 100,
+    speed: 3.2,
+    accel: 0.35,
+    drag: 0.86,
+    size: 18,
+    hp: 160,
+    maxHp: 160,
     shotCooldown: 0,
+    attackWindup: 0,
     facing: 1
+  };
+
+  const ENEMY_TYPES = {
+    grunt: { hp: 3, speed: 1.5, size: 14, color: COLORS.grunt, score: 18 },
+    runner: { hp: 2, speed: 2.2, size: 12, color: COLORS.runner, score: 28 },
+    shooter: { hp: 3, speed: 1.0, size: 14, color: COLORS.shooter, score: 40 },
+    tank: { hp: 8, speed: 0.8, size: 20, color: COLORS.tank, score: 55 }
   };
 
   let enemies = [];
@@ -35,38 +52,39 @@ export function mountArenaMini(container) {
   let wave = 1;
   let spawnTimer = 0;
   let gameOver = false;
+  let shake = 0;
 
   function spawnEnemy() {
+    const types = Object.keys(ENEMY_TYPES);
+    let typeKey = types[Math.floor(Math.random() * Math.min(types.length, 1 + Math.floor(wave / 3)))];
+
+    // More variety as waves progress
+    if (wave > 5 && Math.random() < 0.3) typeKey = 'shooter';
+    if (wave > 8 && Math.random() < 0.2) typeKey = 'tank';
+
+    const type = ENEMY_TYPES[typeKey];
     const side = Math.floor(Math.random() * 4);
     let x, y;
 
-    if (side === 0) { // Top
-      x = Math.random() * canvas.width;
-      y = -20;
-    } else if (side === 1) { // Right
-      x = canvas.width + 20;
-      y = Math.random() * canvas.height;
-    } else if (side === 2) { // Bottom
-      x = Math.random() * canvas.width;
-      y = canvas.height + 20;
-    } else { // Left
-      x = -20;
-      y = Math.random() * canvas.height;
-    }
+    if (side === 0) { x = Math.random() * canvas.width; y = -20; }
+    else if (side === 1) { x = canvas.width + 20; y = Math.random() * canvas.height; }
+    else if (side === 2) { x = Math.random() * canvas.width; y = canvas.height + 20; }
+    else { x = -20; y = Math.random() * canvas.height; }
 
     enemies.push({
-      x,
-      y,
-      vx: 0,
-      vy: 0,
-      speed: 1.2 + wave * 0.1,
-      size: 12,
-      hp: 2 + Math.floor(wave / 3),
-      maxHp: 2 + Math.floor(wave / 3)
+      x, y,
+      vx: 0, vy: 0,
+      type: typeKey,
+      speed: type.speed * (0.8 + wave * 0.02),
+      size: type.size,
+      hp: type.hp + Math.floor(wave / 4),
+      maxHp: type.hp + Math.floor(wave / 4),
+      color: type.color,
+      score: type.score
     });
   }
 
-  function shootBullet() {
+  function shootArrow() {
     if (player.shotCooldown > 0) return;
 
     const dx = keys["d"] || keys["ArrowRight"] ? 1 : (keys["a"] || keys["ArrowLeft"] ? -1 : player.facing);
@@ -76,26 +94,27 @@ export function mountArenaMini(container) {
     shots.push({
       x: player.x,
       y: player.y,
-      vx: (dx / mag) * 8,
-      vy: (dy / mag) * 8,
-      size: 6,
-      damage: 1
+      vx: (dx / mag) * 10,
+      vy: (dy / mag) * 10,
+      size: 7,
+      damage: 1,
+      life: 60
     });
 
-    player.shotCooldown = 15;
+    player.shotCooldown = 12;
+    player.attackWindup = 8;
   }
 
-  function addParticles(x, y, color, count = 8) {
+  function addParticles(x, y, color, count = 8, speed = 3) {
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const speed = 1 + Math.random() * 3;
+      const spd = 0.5 + Math.random() * speed;
       particles.push({
-        x,
-        y,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        size: 2 + Math.random() * 4,
-        life: 20 + Math.random() * 15,
+        x, y,
+        vx: Math.cos(angle) * spd,
+        vy: Math.sin(angle) * spd,
+        size: 2 + Math.random() * 5,
+        life: 15 + Math.random() * 20,
         maxLife: 35,
         color
       });
@@ -109,7 +128,7 @@ export function mountArenaMini(container) {
     keys[e.key] = true;
 
     if (e.key === " " && !gameOver) {
-      shootBullet();
+      shootArrow();
     }
   }
 
@@ -123,20 +142,28 @@ export function mountArenaMini(container) {
   let animationId;
   function gameLoop() {
     if (!gameOver) {
-      // Player movement
-      let dx = 0, dy = 0;
-      if (keys["a"] || keys["ArrowLeft"]) { dx -= 1; player.facing = -1; }
-      if (keys["d"] || keys["ArrowRight"]) { dx += 1; player.facing = 1; }
-      if (keys["w"] || keys["ArrowUp"]) dy -= 1;
-      if (keys["s"] || keys["ArrowDown"]) dy += 1;
+      // Player movement with acceleration
+      let ax = 0, ay = 0;
+      if (keys["a"] || keys["ArrowLeft"]) { ax -= 1; player.facing = -1; }
+      if (keys["d"] || keys["ArrowRight"]) { ax += 1; player.facing = 1; }
+      if (keys["w"] || keys["ArrowUp"]) ay -= 1;
+      if (keys["s"] || keys["ArrowDown"]) ay += 1;
 
-      const mag = Math.sqrt(dx * dx + dy * dy);
+      const mag = Math.sqrt(ax * ax + ay * ay);
       if (mag > 0) {
-        player.vx = (dx / mag) * player.speed;
-        player.vy = (dy / mag) * player.speed;
-      } else {
-        player.vx *= 0.85;
-        player.vy *= 0.85;
+        player.vx += (ax / mag) * player.accel;
+        player.vy += (ay / mag) * player.accel;
+      }
+
+      // Apply drag
+      player.vx *= player.drag;
+      player.vy *= player.drag;
+
+      // Clamp speed
+      const currentSpeed = Math.sqrt(player.vx * player.vx + player.vy * player.vy);
+      if (currentSpeed > player.speed) {
+        player.vx = (player.vx / currentSpeed) * player.speed;
+        player.vy = (player.vy / currentSpeed) * player.speed;
       }
 
       player.x += player.vx;
@@ -147,15 +174,16 @@ export function mountArenaMini(container) {
       player.y = Math.max(player.size, Math.min(canvas.height - player.size, player.y));
 
       if (player.shotCooldown > 0) player.shotCooldown--;
+      if (player.attackWindup > 0) player.attackWindup--;
 
       // Update shots
       for (let i = shots.length - 1; i >= 0; i--) {
         const shot = shots[i];
         shot.x += shot.vx;
         shot.y += shot.vy;
+        shot.life--;
 
-        // Remove off-screen shots
-        if (shot.x < 0 || shot.x > canvas.width || shot.y < 0 || shot.y > canvas.height) {
+        if (shot.life <= 0 || shot.x < 0 || shot.x > canvas.width || shot.y < 0 || shot.y > canvas.height) {
           shots.splice(i, 1);
           continue;
         }
@@ -166,14 +194,16 @@ export function mountArenaMini(container) {
           const dist = Math.sqrt((shot.x - enemy.x) ** 2 + (shot.y - enemy.y) ** 2);
           if (dist < shot.size + enemy.size) {
             enemy.hp -= shot.damage;
-            addParticles(shot.x, shot.y, SHOT_COLOR, 4);
+            addParticles(shot.x, shot.y, COLORS.shot, 5, 2);
+            shake = 3;
             shots.splice(i, 1);
 
             if (enemy.hp <= 0) {
-              addParticles(enemy.x, enemy.y, ENEMY_COLOR, 12);
+              addParticles(enemy.x, enemy.y, enemy.color.body, 16, 4);
               enemies.splice(j, 1);
               kills++;
-              score += 10;
+              score += enemy.score;
+              shake = 5;
             }
             break;
           }
@@ -198,8 +228,9 @@ export function mountArenaMini(container) {
         // Check collision with player
         const playerDist = Math.sqrt((enemy.x - player.x) ** 2 + (enemy.y - player.y) ** 2);
         if (playerDist < enemy.size + player.size) {
-          player.hp -= 5;
-          addParticles(player.x, player.y, "#ff3333", 6);
+          player.hp -= 8;
+          addParticles(player.x, player.y, "#ff3333", 8, 3);
+          shake = 8;
           enemies.splice(i, 1);
 
           if (player.hp <= 0) {
@@ -210,16 +241,17 @@ export function mountArenaMini(container) {
 
       // Spawn enemies
       spawnTimer++;
-      const spawnRate = Math.max(40, 120 - wave * 8);
+      const spawnRate = Math.max(35, 100 - wave * 6);
       if (spawnTimer >= spawnRate) {
         spawnEnemy();
         spawnTimer = 0;
       }
 
-      // Check wave progression
-      if (kills >= wave * 10) {
+      // Wave progression
+      if (kills >= wave * 8) {
         wave++;
-        player.hp = Math.min(player.maxHp, player.hp + 20);
+        player.hp = Math.min(player.maxHp, player.hp + 25);
+        addParticles(player.x, player.y, COLORS.warrior.primary, 20, 5);
       }
 
       // Update particles
@@ -227,116 +259,149 @@ export function mountArenaMini(container) {
         const p = particles[i];
         p.x += p.vx;
         p.y += p.vy;
-        p.vx *= 0.95;
-        p.vy *= 0.95;
+        p.vx *= 0.94;
+        p.vy *= 0.94;
         p.life--;
         if (p.life <= 0) particles.splice(i, 1);
       }
+
+      if (shake > 0) shake--;
     }
 
     // Draw
+    ctx.save();
+
+    // Screen shake
+    if (shake > 0) {
+      ctx.translate(
+        (Math.random() - 0.5) * shake * 2,
+        (Math.random() - 0.5) * shake * 2
+      );
+    }
+
     ctx.fillStyle = "#0a0511";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Draw grid effect
-    ctx.strokeStyle = "#ffffff08";
+    // Grid effect
+    ctx.strokeStyle = "#ffffff06";
     ctx.lineWidth = 1;
-    for (let x = 0; x < canvas.width; x += 40) {
+    for (let x = 0; x < canvas.width; x += 50) {
       ctx.beginPath();
       ctx.moveTo(x, 0);
       ctx.lineTo(x, canvas.height);
       ctx.stroke();
     }
-    for (let y = 0; y < canvas.height; y += 40) {
+    for (let y = 0; y < canvas.height; y += 50) {
       ctx.beginPath();
       ctx.moveTo(0, y);
       ctx.lineTo(canvas.width, y);
       ctx.stroke();
     }
 
-    // Draw particles
+    // Particles
     for (const p of particles) {
       const alpha = p.life / p.maxLife;
-      ctx.globalAlpha = alpha * 0.8;
+      ctx.globalAlpha = alpha * 0.9;
       ctx.fillStyle = p.color;
       ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
     }
     ctx.globalAlpha = 1;
 
-    // Draw shots
+    // Shots
     for (const shot of shots) {
-      ctx.fillStyle = SHOT_COLOR;
-      ctx.shadowBlur = 8;
-      ctx.shadowColor = SHOT_COLOR;
+      ctx.fillStyle = COLORS.shot;
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = COLORS.shot;
       ctx.beginPath();
       ctx.arc(shot.x, shot.y, shot.size, 0, Math.PI * 2);
       ctx.fill();
       ctx.shadowBlur = 0;
     }
 
-    // Draw enemies
+    // Enemies
     for (const enemy of enemies) {
-      ctx.fillStyle = ENEMY_COLOR;
-      ctx.shadowBlur = 10;
-      ctx.shadowColor = ENEMY_COLOR;
-      ctx.fillRect(enemy.x - enemy.size, enemy.y - enemy.size, enemy.size * 2, enemy.size * 2);
+      ctx.fillStyle = enemy.color.body;
+      ctx.shadowBlur = 14;
+      ctx.shadowColor = enemy.color.glow;
+
+      // Different shapes for different types
+      if (enemy.type === 'tank') {
+        ctx.fillRect(enemy.x - enemy.size, enemy.y - enemy.size, enemy.size * 2, enemy.size * 2);
+      } else if (enemy.type === 'runner') {
+        ctx.beginPath();
+        ctx.moveTo(enemy.x, enemy.y - enemy.size);
+        ctx.lineTo(enemy.x + enemy.size, enemy.y + enemy.size);
+        ctx.lineTo(enemy.x - enemy.size, enemy.y + enemy.size);
+        ctx.closePath();
+        ctx.fill();
+      } else {
+        ctx.fillRect(enemy.x - enemy.size, enemy.y - enemy.size, enemy.size * 2, enemy.size * 2);
+      }
       ctx.shadowBlur = 0;
 
       // HP bar
-      const hpRatio = enemy.hp / enemy.maxHp;
-      ctx.fillStyle = "#ffffff33";
-      ctx.fillRect(enemy.x - enemy.size, enemy.y - enemy.size - 8, enemy.size * 2, 3);
-      ctx.fillStyle = "#ff4444";
-      ctx.fillRect(enemy.x - enemy.size, enemy.y - enemy.size - 8, enemy.size * 2 * hpRatio, 3);
+      if (enemy.hp < enemy.maxHp) {
+        const hpRatio = enemy.hp / enemy.maxHp;
+        ctx.fillStyle = "#22224488";
+        ctx.fillRect(enemy.x - enemy.size, enemy.y - enemy.size - 10, enemy.size * 2, 4);
+        ctx.fillStyle = enemy.color.glow;
+        ctx.fillRect(enemy.x - enemy.size, enemy.y - enemy.size - 10, enemy.size * 2 * hpRatio, 4);
+      }
     }
 
-    // Draw player
-    ctx.fillStyle = PLAYER_COLOR;
-    ctx.shadowBlur = 12;
-    ctx.shadowColor = PLAYER_COLOR;
+    // Player (Warrior)
+    const pulse = player.attackWindup > 0 ? 1.2 : 1.0;
+    ctx.fillStyle = COLORS.warrior.primary;
+    ctx.shadowBlur = 16 * pulse;
+    ctx.shadowColor = COLORS.warrior.primary;
     ctx.beginPath();
-    ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
+    ctx.arc(player.x, player.y, player.size * pulse, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    // Player direction indicator
+    // Direction indicator
     ctx.fillStyle = "#ffffff";
-    ctx.fillRect(player.x + player.facing * 8, player.y - 2, 4, 4);
+    ctx.fillRect(player.x + player.facing * 12, player.y - 3, 6, 6);
+
+    ctx.restore();
 
     // UI
-    ctx.fillStyle = "#00ff88";
-    ctx.font = "bold 14px monospace";
-    ctx.fillText(`Wave: ${wave}`, 10, 20);
-    ctx.fillText(`Kills: ${kills}`, 10, 40);
-    ctx.fillText(`Score: ${score}`, 10, 60);
+    ctx.fillStyle = COLORS.warrior.primary;
+    ctx.font = "bold 16px monospace";
+    ctx.fillText(`Wave ${wave}`, 12, 24);
+    ctx.fillText(`Kills ${kills}`, 12, 48);
+    ctx.fillText(`Score ${score}`, 12, 72);
 
     // HP bar
     const hpRatio = player.hp / player.maxHp;
     ctx.fillStyle = "#222244";
-    ctx.fillRect(10, canvas.height - 30, 200, 20);
-    ctx.fillStyle = hpRatio > 0.3 ? "#00ff44" : "#ff3333";
-    ctx.fillRect(10, canvas.height - 30, 200 * hpRatio, 20);
-    ctx.strokeStyle = "#00ff88";
+    ctx.fillRect(12, canvas.height - 40, 240, 24);
+    ctx.fillStyle = hpRatio > 0.3 ? COLORS.ui.health : COLORS.ui.healthLow;
+    ctx.fillRect(12, canvas.height - 40, 240 * hpRatio, 24);
+    ctx.strokeStyle = COLORS.warrior.primary;
     ctx.lineWidth = 2;
-    ctx.strokeRect(10, canvas.height - 30, 200, 20);
+    ctx.strokeRect(12, canvas.height - 40, 240, 24);
     ctx.fillStyle = "#ffffff";
-    ctx.font = "12px monospace";
-    ctx.fillText(`HP: ${Math.max(0, player.hp)}/${player.maxHp}`, 15, canvas.height - 15);
+    ctx.font = "bold 14px monospace";
+    ctx.fillText(`${Math.max(0, Math.floor(player.hp))}/${player.maxHp}`, 18, canvas.height - 20);
 
     if (gameOver) {
-      ctx.fillStyle = "#00000088";
+      ctx.fillStyle = "#00000099";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "#3cff6b";
-      ctx.font = "bold 32px monospace";
+      ctx.fillStyle = COLORS.warrior.primary;
+      ctx.shadowBlur = 20;
+      ctx.shadowColor = COLORS.warrior.primary;
+      ctx.font = "bold 36px monospace";
       ctx.textAlign = "center";
-      ctx.fillText("DEFEATED", canvas.width / 2, canvas.height / 2 - 20);
-      ctx.font = "18px monospace";
-      ctx.fillText(`Wave ${wave} · ${kills} Kills · Score ${score}`, canvas.width / 2, canvas.height / 2 + 20);
+      ctx.fillText("DEFEATED", canvas.width / 2, canvas.height / 2 - 30);
+      ctx.shadowBlur = 0;
+      ctx.font = "20px monospace";
+      ctx.fillText(`Wave ${wave} · ${kills} Kills · ${score} Score`, canvas.width / 2, canvas.height / 2 + 20);
       ctx.textAlign = "left";
     } else {
-      ctx.fillStyle = "#3cff6b99";
-      ctx.font = "11px monospace";
-      ctx.fillText("WASD or Arrows to move · Space to shoot", 10, canvas.height - 40);
+      ctx.fillStyle = COLORS.warrior.secondary + "aa";
+      ctx.font = "12px monospace";
+      ctx.fillText("WASD/Arrows move · Space shoot", 12, canvas.height - 50);
     }
 
     animationId = requestAnimationFrame(gameLoop);
