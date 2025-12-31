@@ -1,0 +1,1602 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Yes/No Day</title>
+  <meta name="description" content="A cute yes/no calendar: YES days you do things, NO days you refuse." />
+  <style>
+    :root{
+      --bgA:#fbf7ff;
+      --bgB:#f6fbff;
+      --card: color-mix(in srgb, #ffffff 82%, transparent);
+      --ink:#1d1b22;
+      --muted:#5b5566;
+      --line: color-mix(in srgb, #e9e2f2 88%, transparent);
+
+      --yes:#ffb3c7;
+      --yes2:#ffd5a6;
+      --no:#b7d9ff;
+      --no2:#c9f2e0;
+      --unset:#e9e2f2;
+
+      --shadow: 0 18px 55px rgba(22, 12, 42, .14);
+      --shadow2: 0 12px 28px rgba(22, 12, 42, .10);
+      --shadow3: 0 10px 20px rgba(0,0,0,.08);
+
+      --radius: 22px;
+      --radius2: 16px;
+      --radius3: 14px;
+
+      --font: ui-rounded, system-ui, -apple-system, "SF Pro Rounded",
+              "Segoe UI Variable", "Segoe UI", Roboto, Arial, sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+      --focus: rgba(120, 80, 255, .28);
+      --accent: #8050ff;
+      --accent2: #3b82f6;
+    }
+
+    /* Dark theme tokens */
+    [data-theme="dark"]{
+      --bgA:#070611;
+      --bgB:#0b1324;
+      --card: color-mix(in srgb, #10101b 84%, transparent);
+      --ink:#f3f2f7;
+      --muted:#b8b3c6;
+      --line: color-mix(in srgb, #2b2741 92%, transparent);
+
+      --unset: #2b2741;
+      --shadow: 0 18px 60px rgba(0,0,0,.40);
+      --shadow2: 0 14px 28px rgba(0,0,0,.28);
+      --shadow3: 0 10px 20px rgba(0,0,0,.28);
+
+      --focus: rgba(148, 120, 255, .30);
+      --accent: #a78bfa;
+      --accent2: #60a5fa;
+    }
+
+    html, body{ height:100%; margin:0; font-family: var(--font); color: var(--ink); }
+    body{
+      overflow-x:hidden;
+      background:
+        radial-gradient(1200px 700px at 20% 12%, color-mix(in srgb, var(--bgB) 92%, #ffffff 8%), transparent 70%),
+        radial-gradient(1100px 780px at 86% 18%, color-mix(in srgb, var(--bgA) 90%, #ffffff 10%), transparent 65%),
+        radial-gradient(900px 650px at 40% 90%, color-mix(in srgb, var(--bgB) 70%, #c7d2fe 30%), transparent 70%),
+        linear-gradient(135deg, color-mix(in srgb, var(--bgA) 80%, #ffffff 20%), var(--bgB));
+    }
+
+    /* subtle noise */
+    body::before{
+      content:"";
+      position:fixed;
+      inset:-2px;
+      pointer-events:none;
+      opacity:.35;
+      background:
+        radial-gradient(circle at 10% 20%, rgba(0,0,0,.035), transparent 35%),
+        radial-gradient(circle at 90% 60%, rgba(0,0,0,.03), transparent 40%),
+        radial-gradient(circle at 40% 90%, rgba(0,0,0,.02), transparent 45%);
+      mix-blend-mode:multiply;
+      filter: blur(.3px);
+    }
+
+    .wrap{
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 16px 96px;
+      position:relative;
+    }
+
+    /* Top bar */
+    header{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      align-items:start;
+      margin-bottom: 14px;
+    }
+
+    .brand{ display:flex; flex-direction:column; gap:8px; }
+    .titleRow{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .title{
+      font-size: clamp(22px, 3.1vw, 34px);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height:1.05;
+    }
+
+    .tagRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .badge{
+      font-size: 12px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--card) 80%, transparent);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      box-shadow: 0 8px 22px rgba(0,0,0,.06);
+      user-select:none;
+    }
+    .badge.clock{
+      font-family: var(--mono);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: .04em;
+    }
+
+
+    .sub{
+      color: var(--muted);
+      font-size: 14px;
+      line-height:1.35;
+      max-width: 620px;
+    }
+
+    .rightControls{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+      margin-top: 2px;
+    }
+
+    button{ font-family: var(--font); }
+
+    .btn{
+      appearance:none;
+      border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--card) 86%, transparent);
+      color: var(--ink);
+      padding: 10px 12px;
+      border-radius: 14px;
+      cursor:pointer;
+      box-shadow: var(--shadow3);
+      transition: transform .12s ease, box-shadow .12s ease, background .12s ease, border-color .12s ease;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      user-select:none;
+    }
+    .btn:hover{ transform: translateY(-1px); box-shadow: 0 16px 28px rgba(0,0,0,.10); }
+    .btn:active{ transform: translateY(0); }
+    .btn:focus-visible{ outline: 3px solid var(--focus); outline-offset: 2px; }
+
+    .btn.small{ padding: 8px 10px; border-radius: 12px; font-size: 13px; }
+    .btn.ghost{ background: transparent; box-shadow:none; }
+    .btn.ghost:hover{ background: color-mix(in srgb, var(--card) 70%, transparent); }
+
+    .hint{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      color: var(--muted);
+      font-size: 13px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      text-align:right;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:7px;
+      padding: 7px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: color-mix(in srgb, var(--card) 78%, transparent);
+    }
+    .key{
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--unset) 42%, transparent);
+      border:1px solid color-mix(in srgb, var(--line) 80%, transparent);
+      color: color-mix(in srgb, var(--ink) 92%, var(--muted) 8%);
+    }
+
+    /* Panel */
+    .panel{
+      background: color-mix(in srgb, var(--card) 92%, transparent);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      overflow:hidden;
+    }
+
+    .toolbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding: 14px 14px 10px;
+    }
+
+    .monthNav{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width: 260px;
+    }
+
+    .monthLabel{
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: -0.01em;
+      padding: 8px 10px;
+      border-radius: 14px;
+      background: color-mix(in srgb, var(--card) 82%, transparent);
+      border: 1px solid var(--line);
+      box-shadow: 0 10px 24px rgba(0,0,0,.08);
+      user-select:none;
+      white-space: nowrap;
+    }
+
+    .stats{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+    }
+    .stat{
+      padding: 7px 10px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--card) 80%, transparent);
+      box-shadow: 0 10px 22px rgba(0,0,0,.06);
+      font-size: 12px;
+      color: var(--muted);
+      display:flex;
+      gap:8px;
+      align-items:center;
+      user-select:none;
+    }
+    .stat b{ color: var(--ink); font-weight: 900; letter-spacing: .01em; }
+    .dot{
+      width: 10px;
+      height: 10px;
+      border-radius:999px;
+      background: var(--unset);
+      box-shadow: 0 6px 14px rgba(0,0,0,.08);
+    }
+    .dot.yes{ background:#ff5c8a; }
+    .dot.no{ background:#2d7dff; }
+
+    .weekdays{
+      display:grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+      padding: 0 14px 10px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .weekday{
+      padding: 7px 8px;
+      border-radius: 12px;
+      text-align:center;
+      background: color-mix(in srgb, var(--card) 70%, transparent);
+      border: 1px dashed color-mix(in srgb, var(--line) 80%, transparent);
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+      padding: 0 14px 16px;
+    }
+
+    .day{
+      position:relative;
+      min-height: 94px;
+      border-radius: var(--radius2);
+      border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--card) 82%, transparent);
+      box-shadow: var(--shadow2);
+      cursor:pointer;
+      transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease, filter .12s ease;
+      overflow:hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .day:hover{ transform: translateY(-1px); box-shadow: 0 18px 34px rgba(0,0,0,.12); }
+    .day:active{ transform: translateY(0); }
+    .day:focus-visible{ outline: 3px solid var(--focus); outline-offset: 2px; }
+
+    /* sheen */
+    .day::before{
+      content:"";
+      position:absolute;
+      inset:-30% -30% auto -30%;
+      height: 60%;
+      background: radial-gradient(closest-side, rgba(255,255,255,.60), transparent 70%);
+      opacity: .18;
+      transform: rotate(12deg);
+      pointer-events:none;
+    }
+
+    .day.muted{
+      opacity:.55;
+      filter:saturate(.9);
+    }
+
+    .num{
+      position:absolute;
+      top: 10px;
+      left: 10px;
+      font-weight: 950;
+      font-size: 16px;
+      letter-spacing: -0.01em;
+      color: color-mix(in srgb, var(--ink) 92%, transparent);
+      user-select:none;
+    }
+
+    .stamp{
+      position:absolute;
+      right: 10px;
+      top: 10px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--card) 86%, transparent);
+      color: var(--muted);
+      display:inline-flex;
+      align-items:center;
+      gap:7px;
+      user-select:none;
+      transform: rotate(-3deg);
+    }
+
+    .day.yes .stamp{
+      background: linear-gradient(135deg, color-mix(in srgb, var(--yes) 90%, transparent), color-mix(in srgb, var(--yes2) 86%, transparent));
+      color: color-mix(in srgb, #3b1b28 92%, var(--ink) 8%);
+      border-color: color-mix(in srgb, var(--yes) 60%, transparent);
+    }
+    .day.yes .stamp .dot{ background: #ff5c8a; }
+
+    .day.no .stamp{
+      background: linear-gradient(135deg, color-mix(in srgb, var(--no) 90%, transparent), color-mix(in srgb, var(--no2) 86%, transparent));
+      color: color-mix(in srgb, #12304e 92%, var(--ink) 8%);
+      border-color: color-mix(in srgb, var(--no) 60%, transparent);
+    }
+    .day.no .stamp .dot{ background: #2d7dff; }
+
+    /* stamp pop animation on update */
+    .stamp.pop{ animation: pop .22s ease-out; }
+    @keyframes pop{
+      0%{ transform: rotate(-3deg) scale(.92); filter:saturate(.9); }
+      70%{ transform: rotate(-3deg) scale(1.06); filter:saturate(1.05); }
+      100%{ transform: rotate(-3deg) scale(1); }
+    }
+
+    .miniNote{
+      position:absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height:1.25;
+      display:-webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow:hidden;
+      opacity:0;
+      transition: opacity .12s ease;
+    }
+    .miniNote.has{ opacity:1; }
+
+    /* Today emphasis */
+    .day.today{
+      border-color: color-mix(in srgb, var(--accent) 48%, var(--line) 52%);
+      box-shadow: 0 18px 36px color-mix(in srgb, var(--accent) 18%, transparent), var(--shadow2);
+    }
+
+    /* Drawer */
+    .drawerBackdrop{
+      position:fixed;
+      inset:0;
+      background: rgba(10, 8, 16, .26);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .16s ease;
+      z-index: 50;
+    }
+    .drawerBackdrop.open{
+      opacity:1;
+      pointer-events:auto;
+    }
+    .drawer{
+      position:fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: -460px;
+      width: min(900px, calc(100% - 18px));
+      background: color-mix(in srgb, var(--card) 92%, transparent);
+      border: 1px solid var(--line);
+      border-radius: 26px 26px 18px 18px;
+      box-shadow: var(--shadow);
+      transition: bottom .22s ease;
+      z-index: 60;
+      overflow:hidden;
+    }
+    .drawer.open{ bottom: 12px; }
+
+    .drawerTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      padding: 16px 16px 10px;
+      background:
+        radial-gradient(700px 220px at 20% 0%, color-mix(in srgb, var(--card) 88%, transparent), transparent 70%),
+        radial-gradient(650px 240px at 80% 10%, color-mix(in srgb, var(--card) 82%, transparent), transparent 70%),
+        linear-gradient(135deg, color-mix(in srgb, var(--card) 96%, transparent), color-mix(in srgb, var(--bgA) 40%, transparent));
+      border-bottom: 1px solid var(--line);
+    }
+    .drawerTitle{
+      font-weight: 950;
+      font-size: 18px;
+      letter-spacing: -0.01em;
+    }
+    .drawerSub{
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .drawerBody{
+      padding: 14px 16px 16px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .toggleRow{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .toggle{
+      flex: 1 1 150px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--card) 82%, transparent);
+      padding: 12px 12px;
+      cursor:pointer;
+      box-shadow: var(--shadow2);
+      transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease, filter .12s ease;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      min-height: 54px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .toggle:hover{ transform: translateY(-1px); box-shadow: 0 18px 32px rgba(0,0,0,.12); }
+    .toggle:active{ transform: translateY(0); }
+    .toggle:focus-visible{ outline: 3px solid var(--focus); outline-offset: 2px; }
+
+    .toggle strong{
+      font-weight: 950;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      font-size: 12px;
+    }
+    .toggle span{
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .toggle.yes{
+      border-color: color-mix(in srgb, var(--yes) 60%, transparent);
+      background: linear-gradient(135deg, color-mix(in srgb, var(--yes) 70%, transparent), color-mix(in srgb, var(--yes2) 60%, transparent));
+    }
+    .toggle.no{
+      border-color: color-mix(in srgb, var(--no) 65%, transparent);
+      background: linear-gradient(135deg, color-mix(in srgb, var(--no) 64%, transparent), color-mix(in srgb, var(--no2) 56%, transparent));
+    }
+    .toggle.unset{
+      border-style:dashed;
+      background: linear-gradient(135deg, color-mix(in srgb, var(--unset) 54%, transparent), color-mix(in srgb, var(--card) 70%, transparent));
+    }
+
+    .noteBox{
+      border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--card) 82%, transparent);
+      border-radius: 18px;
+      padding: 12px 12px;
+      box-shadow: var(--shadow2);
+    }
+    .noteBox label{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    textarea{
+      width: 100%;
+      min-height: 70px;
+      max-height: 180px;
+      resize: vertical;
+      border-radius: 14px;
+      border: 1px solid color-mix(in srgb, var(--line) 92%, transparent);
+      padding: 10px 10px;
+      font-family: var(--font);
+      font-size: 14px;
+      outline:none;
+      color: var(--ink);
+      background: color-mix(in srgb, var(--card) 90%, transparent);
+      box-sizing:border-box;
+    }
+    textarea:focus{ outline: 3px solid var(--focus); border-color: color-mix(in srgb, var(--accent) 30%, var(--line) 70%); }
+
+    .footerRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      flex-wrap:wrap;
+      padding-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    /* Universal back button (kept) */
+    #backToHome{
+      position:fixed; right:16px; top:16px;
+      padding:10px 14px;
+      background: color-mix(in srgb, #000 72%, transparent);
+      backdrop-filter: blur(10px);
+      border:1px solid rgba(255,255,255,0.22);
+      border-radius:12px;
+      box-shadow: 0 10px 26px rgba(0,0,0,0.26);
+      color: #ffffff;
+      font: 650 13px/1 system-ui, sans-serif;
+      z-index:9999;
+      cursor:pointer;
+      transition:all .15s ease;
+      text-decoration:none;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    #backToHome:hover{
+      background: rgba(255,255,255,0.14);
+      border-color: rgba(255,255,255,0.40);
+      transform:translateY(-1px);
+    }
+    #backToHome:active{transform:scale(0.98);}
+    @media (max-width:640px){
+      #backToHome{padding:8px 12px; font-size:12px; right:12px; top:12px;}
+    }
+
+    .srOnly{
+      position:absolute !important;
+      width:1px;height:1px;
+      padding:0;margin:-1px;
+      overflow:hidden;clip:rect(0,0,0,0);
+      white-space:nowrap;border:0;
+    }
+
+    @media (max-width: 820px){
+      header{ grid-template-columns: 1fr; }
+      .rightControls{ justify-content:flex-start; }
+      .hint{ justify-content:flex-start; text-align:left; }
+    }
+    @media (max-width: 520px){
+      .day{ min-height: 84px; }
+      .stamp{ font-size: 11px; padding: 6px 9px; }
+      .monthNav{ min-width: auto; }
+      .toolbar{ flex-wrap:wrap; }
+      .stats{ width: 100%; justify-content:flex-start; }
+    }
+
+    @media (prefers-reduced-motion: reduce){
+      *{ transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+    }
+  
+    /* Command palette */
+    .cmdBackdrop{
+      position:fixed;
+      inset:0;
+      background: rgba(10, 8, 16, .34);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .16s ease;
+      z-index: 80;
+    }
+    .cmdBackdrop.open{ opacity:1; pointer-events:auto; }
+
+    .cmd{
+      position:fixed;
+      left: 50%;
+      top: 12%;
+      transform: translateX(-50%);
+      width: min(720px, calc(100% - 18px));
+      background: color-mix(in srgb, var(--card) 92%, transparent);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      opacity: 0;
+      pointer-events:none;
+      transition: opacity .16s ease, transform .16s ease;
+      z-index: 90;
+    }
+    .cmd.open{
+      opacity:1;
+      pointer-events:auto;
+      transform: translateX(-50%) translateY(0);
+    }
+    .cmdHead{
+      padding: 14px 14px 10px;
+      border-bottom: 1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      background:
+        radial-gradient(700px 220px at 20% 0%, color-mix(in srgb, var(--card) 88%, transparent), transparent 70%),
+        radial-gradient(650px 240px at 80% 10%, color-mix(in srgb, var(--card) 82%, transparent), transparent 70%),
+        linear-gradient(135deg, color-mix(in srgb, var(--card) 96%, transparent), color-mix(in srgb, var(--bgA) 40%, transparent));
+    }
+    .cmdTitle{
+      font-weight: 950;
+      letter-spacing: -0.01em;
+      font-size: 15px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .cmdBody{ padding: 12px 14px 14px; display:grid; gap:10px; }
+    .cmdInput{
+      width:100%;
+      border-radius: 14px;
+      border: 1px solid color-mix(in srgb, var(--line) 92%, transparent);
+      padding: 12px 12px;
+      font-family: var(--mono);
+      font-size: 14px;
+      outline:none;
+      color: var(--ink);
+      background: color-mix(in srgb, var(--card) 90%, transparent);
+      box-sizing:border-box;
+    }
+    .cmdInput:focus{ outline: 3px solid var(--focus); border-color: color-mix(in srgb, var(--accent) 30%, var(--line) 70%); }
+    .cmdHelp{
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .cmdExamples{ display:flex; gap:8px; flex-wrap:wrap; }
+
+  </style>
+</head>
+<body>
+<a id="backToHome" href="index.html" title="Back to Homepage">
+  <span>←</span>
+  <span>Home</span>
+</a>
+
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="titleRow">
+          <div class="title">Yes/No Day</div>
+          <span class="badge" id="todayBadge">today</span>
+          <span class="badge clock" id="clockBadge" title="Local time">--:--:--</span>
+          <span class="badge" id="themeBadge" title="Theme saved on this device">theme: auto</span>
+        </div>
+        <div class="sub">
+          A tiny calendar where every day is either <b>YES</b> (you'll do things) or <b>NO</b> (you refuse).
+          Click a day to stamp it.
+        </div>
+      </div>
+
+      <div class="rightControls">
+        <button class="btn small ghost" id="cmdBtn" title="Jump to date (Ctrl/Cmd+K)">⌘K Jump</button>
+        <button class="btn small" id="themeBtn" title="Toggle theme">🌓 Theme</button>
+        <div class="hint" aria-label="shortcuts">
+          <span class="pill"><span class="key">Y</span> YES</span>
+          <span class="pill"><span class="key">N</span> NO</span>
+          <span class="pill"><span class="key">U</span> Unset</span>
+          <span class="pill"><span class="key">Ctrl</span><span class="key">K</span> Jump</span>
+          <span class="pill"><span class="key">Esc</span> Close</span>
+        </div>
+      </div>
+    </header>
+
+    <section class="panel" aria-label="calendar panel">
+      <div class="toolbar">
+        <div class="monthNav">
+          <button class="btn small" id="prevBtn" aria-label="previous month">←</button>
+          <div class="monthLabel" id="monthLabel" aria-live="polite"></div>
+          <button class="btn small" id="nextBtn" aria-label="next month">→</button>
+        </div>
+
+        <div class="stats" aria-label="month stats">
+          <div class="stat" title="YES days in this month"><span class="dot yes"></span><b id="yesCount">0</b> YES</div>
+          <div class="stat" title="NO days in this month"><span class="dot no"></span><b id="noCount">0</b> NO</div>
+          <div class="stat" title="Days with a note"><span class="dot"></span><b id="noteCount">0</b> notes</div>
+          <button class="btn small ghost" id="jumpTodayBtn">Today</button>
+          <button class="btn small" id="clearMonthBtn" title="Clear YES/NO stamps for this month (keeps notes)">Clear month</button>
+        </div>
+      </div>
+
+      <div class="weekdays" aria-hidden="true">
+        <div class="weekday">Sun</div><div class="weekday">Mon</div><div class="weekday">Tue</div>
+        <div class="weekday">Wed</div><div class="weekday">Thu</div><div class="weekday">Fri</div>
+        <div class="weekday">Sat</div>
+      </div>
+
+      <div class="grid" id="grid" role="grid" aria-label="month grid"></div>
+    </section>
+  </div>
+
+  <!-- Drawer -->
+  <div class="drawerBackdrop" id="backdrop" tabindex="-1" aria-hidden="true"></div>
+  <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+    <div class="drawerTop">
+      <div>
+        <div class="drawerTitle" id="drawerTitle">Day</div>
+        <div class="drawerSub" id="drawerSub">Stamp it YES or NO.</div>
+      </div>
+      <button class="btn small" id="closeDrawerBtn" aria-label="close">Close</button>
+    </div>
+    <div class="drawerBody">
+      <div class="toggleRow" aria-label="state toggles">
+        <button class="toggle yes" id="setYesBtn">
+          <div>
+            <strong>YES</strong><br><span>do things</span>
+          </div>
+          <span aria-hidden="true">✨</span>
+        </button>
+        <button class="toggle no" id="setNoBtn">
+          <div>
+            <strong>NO</strong><br><span>refuse</span>
+          </div>
+          <span aria-hidden="true">🫧</span>
+        </button>
+        <button class="toggle unset" id="setUnsetBtn">
+          <div>
+            <strong>UNSET</strong><br><span>blank</span>
+          </div>
+          <span aria-hidden="true">…</span>
+        </button>
+      </div>
+
+      <div class="noteBox">
+        <label for="noteInput">
+          tiny note (optional)
+          <span id="noteHint" class="srOnly">Saved automatically</span>
+        </label>
+        <textarea id="noteInput" maxlength="160" placeholder="ex: 'no meetings' or 'gym + errands'"></textarea>
+        <div class="footerRow">
+          <div id="stateLine">State: —</div>
+          <div><span class="key" id="charCount">0</span> / 160</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+
+  <!-- Command palette -->
+  <div class="cmdBackdrop" id="cmdBackdrop" tabindex="-1" aria-hidden="true"></div>
+  <div class="cmd" id="cmd" role="dialog" aria-modal="true" aria-labelledby="cmdTitle">
+    <div class="cmdHead">
+      <div class="cmdTitle" id="cmdTitle">Jump to date <span class="badge" style="margin-left:6px;">Ctrl/Cmd + K</span></div>
+      <button class="btn small" id="cmdCloseBtn" aria-label="close">Close</button>
+    </div>
+    <div class="cmdBody">
+      <input class="cmdInput" id="cmdInput" type="text" inputmode="text" autocomplete="off" placeholder="Try: March 12 • March • next Monday • +7 • m+1 • help" />
+      <div class="cmdHelp" style="margin-top:-2px;">
+        <div class="cmdExamples">
+          <span class="pill"><span class="key">Enter</span> Run</span>
+          <span class="pill"><span class="key">Esc</span> Close</span>
+          <span class="pill"><span class="key">Tab</span> Autocomplete</span>
+        </div>
+        <div id="cmdPreview">—</div>
+      </div>
+    </div>
+  </div>
+
+
+  <script>
+    // ====== Yes/No Day (single-file, no deps) ======
+    // Storage:
+    // - state: localStorage key "ynd:YYYY-MM-DD" value "YES" | "NO"
+    // - note:  localStorage key "yndnote:YYYY-MM-DD" value string
+    (() => {
+      const $ = (id) => document.getElementById(id);
+
+      const grid = $('grid');
+      const monthLabel = $('monthLabel');
+      const prevBtn = $('prevBtn');
+      const nextBtn = $('nextBtn');
+      const jumpTodayBtn = $('jumpTodayBtn');
+      const clearMonthBtn = $('clearMonthBtn');
+
+      const backdrop = $('backdrop');
+      const drawer = $('drawer');
+      const closeDrawerBtn = $('closeDrawerBtn');
+
+      const drawerTitle = $('drawerTitle');
+      const drawerSub = $('drawerSub');
+      const setYesBtn = $('setYesBtn');
+      const setNoBtn = $('setNoBtn');
+      const setUnsetBtn = $('setUnsetBtn');
+
+      const noteInput = $('noteInput');
+      const stateLine = $('stateLine');
+      const charCount = $('charCount');
+      const todayBadge = $('todayBadge');
+      const clockBadge = $('clockBadge');
+
+      const yesCount = $('yesCount');
+      const noCount = $('noCount');
+      const noteCount = $('noteCount');
+
+      const themeBtn = $('themeBtn');
+      const themeBadge = $('themeBadge');
+
+      const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+      // ---- Command palette (Jump to date) ----
+      const cmdBtn = $('cmdBtn');
+      const cmdBackdrop = $('cmdBackdrop');
+      const cmd = $('cmd');
+      const cmdCloseBtn = $('cmdCloseBtn');
+      const cmdInput = $('cmdInput');
+      const cmdPreview = $('cmdPreview');
+
+      function openCmd(prefill=""){
+        cmdBackdrop.classList.add("open");
+        cmd.classList.add("open");
+        cmdBackdrop.setAttribute("aria-hidden","false");
+        if (cmdInput){
+          cmdInput.value = prefill;
+          setTimeout(() => { cmdInput.focus(); cmdInput.select(); }, 0);
+        }
+        // update preview
+        try{ if (typeof updateCmdPreview === "function") updateCmdPreview(); }catch(_){}
+      }
+      function closeCmd(){
+        cmdBackdrop.classList.remove("open");
+        cmd.classList.remove("open");
+        cmdBackdrop.setAttribute("aria-hidden","true");
+      }
+
+
+      const pad2 = n => String(n).padStart(2,'0');
+      const fmtKey = (y,m,d) => `${y}-${pad2(m+1)}-${pad2(d)}`;
+      const stateKey = iso => `ynd:${iso}`;
+      const noteKey  = iso => `yndnote:${iso}`;
+
+      const getState = iso => localStorage.getItem(stateKey(iso)); // "YES" | "NO" | null
+      const setState = (iso, v) => {
+        if (!v) localStorage.removeItem(stateKey(iso));
+        else localStorage.setItem(stateKey(iso), v);
+      };
+      const getNote = iso => localStorage.getItem(noteKey(iso)) || "";
+      const setNote = (iso, txt) => {
+        const cleaned = (txt || "").trimEnd();
+        if (!cleaned) localStorage.removeItem(noteKey(iso));
+        else localStorage.setItem(noteKey(iso), cleaned);
+      };
+
+      // ---- Theme ----
+      // Stored value: "auto" | "light" | "dark"
+      const THEME_KEY = "ynd_theme";
+      const themeOrder = ["auto","light","dark"];
+      const getTheme = () => localStorage.getItem(THEME_KEY) || "auto";
+
+      function applyTheme(mode){
+        if (mode === "dark") document.documentElement.setAttribute("data-theme","dark");
+        else if (mode === "light") document.documentElement.removeAttribute("data-theme");
+        else {
+          // auto: follow OS preference
+          const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+          if (prefersDark) document.documentElement.setAttribute("data-theme","dark");
+          else document.documentElement.removeAttribute("data-theme");
+        }
+        themeBadge.textContent = `theme: ${mode}`;
+      }
+
+      function cycleTheme(){
+        const cur = getTheme();
+        const idx = themeOrder.indexOf(cur);
+        const next = themeOrder[(idx + 1) % themeOrder.length];
+        localStorage.setItem(THEME_KEY, next);
+        applyTheme(next);
+      }
+
+      themeBtn.addEventListener("click", cycleTheme);
+
+      // react to OS changes if auto
+      if (window.matchMedia){
+        window.matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", () => {
+          if (getTheme() === "auto") applyTheme("auto");
+        });
+      }
+
+      applyTheme(getTheme());
+
+      // ---- Calendar ----
+      const now = new Date();
+      const todayISO = fmtKey(now.getFullYear(), now.getMonth(), now.getDate());
+      todayBadge.textContent = `today: ${todayISO}`;
+
+      function updateClock(){
+        const d = new Date();
+        const hh = String(d.getHours()).padStart(2,'0');
+        const mm = String(d.getMinutes()).padStart(2,'0');
+        const ss = String(d.getSeconds()).padStart(2,'0');
+        if (clockBadge) clockBadge.textContent = `${hh}:${mm}:${ss}`;
+      }
+      updateClock();
+      setInterval(updateClock, 1000);
+
+      let view = new Date(now.getFullYear(), now.getMonth(), 1);
+      let selectedISO = null;
+      let selectedCell = null;
+
+      function monthMeta(dateObj){
+        const y = dateObj.getFullYear();
+        const m = dateObj.getMonth();
+        const first = new Date(y, m, 1);
+        const last = new Date(y, m + 1, 0);
+        const daysInMonth = last.getDate();
+        const startDow = first.getDay(); // 0=Sun
+        return { y, m, first, last, daysInMonth, startDow };
+      }
+
+      function updateStatsForMonth(y, m, daysInMonth){
+        let yCount = 0, nCount = 0, ntCount = 0;
+        for (let d=1; d<=daysInMonth; d++){
+          const iso = fmtKey(y,m,d);
+          const s = getState(iso);
+          if (s === "YES") yCount++;
+          else if (s === "NO") nCount++;
+          const note = getNote(iso);
+          if (note && note.trim()) ntCount++;
+        }
+        yesCount.textContent = String(yCount);
+        noCount.textContent = String(nCount);
+        noteCount.textContent = String(ntCount);
+      }
+
+      function render(){
+        const { y, m, daysInMonth, startDow } = monthMeta(view);
+        monthLabel.textContent = `${months[m]} ${y}`;
+        updateStatsForMonth(y, m, daysInMonth);
+
+        grid.innerHTML = "";
+
+        // 6 rows x 7 cols = 42 cells for consistent layout
+        const totalCells = 42;
+        const prevLast = new Date(y, m, 0).getDate();
+
+        for (let i=0; i<totalCells; i++){
+          const cell = document.createElement('button');
+          cell.type = "button";
+          cell.className = "day";
+          cell.setAttribute("role","gridcell");
+
+          const dayNum = i - startDow + 1;
+          let cellDate = null;
+          let inMonth = true;
+
+          if (dayNum < 1){
+            inMonth = false;
+            const d = prevLast + dayNum;
+            cellDate = new Date(y, m-1, d);
+          } else if (dayNum > daysInMonth){
+            inMonth = false;
+            const d = dayNum - daysInMonth;
+            cellDate = new Date(y, m+1, d);
+          } else {
+            cellDate = new Date(y, m, dayNum);
+          }
+
+          const iso = fmtKey(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate());
+          const state = getState(iso);
+          const note = getNote(iso);
+
+          if (!inMonth) cell.classList.add("muted");
+          if (state === "YES") cell.classList.add("yes");
+          if (state === "NO") cell.classList.add("no");
+          if (iso === todayISO) cell.classList.add("today");
+
+          const num = document.createElement('div');
+          num.className = "num";
+          num.textContent = cellDate.getDate();
+
+          const stamp = document.createElement('div');
+          stamp.className = "stamp";
+          const dot = document.createElement('span');
+          dot.className = "dot";
+          const txt = document.createElement('span');
+          txt.textContent = state ? state : "—";
+          stamp.appendChild(dot);
+          stamp.appendChild(txt);
+
+          const mini = document.createElement('div');
+          mini.className = "miniNote";
+          if (note) {
+            mini.textContent = note;
+            mini.classList.add("has");
+          } else {
+            mini.textContent = "";
+          }
+
+          cell.appendChild(num);
+          cell.appendChild(stamp);
+          cell.appendChild(mini);
+
+          cell.addEventListener('click', () => openDrawer(iso, cell));
+          cell.setAttribute("aria-label", `${iso} ${state ? state : "UNSET"}`);
+
+          grid.appendChild(cell);
+        }
+      }
+
+
+      function findCellByISO(iso){
+        const cells = Array.from(grid.querySelectorAll('.day'));
+        for (const c of cells){
+          const label = c.getAttribute('aria-label') || "";
+          if (label.startsWith(iso)) return c;
+        }
+        return null;
+      }
+
+      function jumpToISO(iso){
+        // Move view to that month, re-render, then open the drawer for that day.
+        const parts = iso.split("-");
+        if (parts.length !== 3) return false;
+        const y = Number(parts[0]), m = Number(parts[1]) - 1, d = Number(parts[2]);
+        if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return false;
+
+        view = new Date(y, m, 1);
+        render();
+
+        setTimeout(() => {
+          const cell = findCellByISO(iso);
+          if (cell) openDrawer(iso, cell);
+        }, 0);
+
+        return true;
+      }
+
+
+      function isValidYMD(y, m1, d){
+        // m1 is 1-12
+        const dt = new Date(y, m1-1, d);
+        return dt.getFullYear() === y && dt.getMonth() === (m1-1) && dt.getDate() === d;
+      }
+
+      function closestYearForMonthDay(m1, d){
+        // Choose the closest occurrence of month/day relative to 'now'
+        const candidates = [];
+        const baseYear = now.getFullYear();
+        for (const y of [baseYear-1, baseYear, baseYear+1, baseYear+2]){
+          if (isValidYMD(y, m1, d)) candidates.push(new Date(y, m1-1, d));
+        }
+        if (!candidates.length) return baseYear;
+
+        const nowT = now.getTime();
+        candidates.sort((a,b) => {
+          const da = Math.abs(a.getTime() - nowT);
+          const db = Math.abs(b.getTime() - nowT);
+          if (da !== db) return da - db;
+          // Tie-break: prefer future (>= now)
+          const af = a.getTime() >= nowT;
+          const bf = b.getTime() >= nowT;
+          if (af !== bf) return af ? -1 : 1;
+          return a.getTime() - b.getTime();
+        });
+        return candidates[0].getFullYear();
+      }
+
+
+      function addDays(date, n){
+        const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        d.setDate(d.getDate() + n);
+        return d;
+      }
+      function isoFromDate(d){
+        return fmtKey(d.getFullYear(), d.getMonth(), d.getDate());
+      }
+      function isWeekdayToken(t){
+        const w = ["sun","sunday","mon","monday","tue","tues","tuesday","wed","weds","wednesday","thu","thur","thurs","thursday","fri","friday","sat","saturday"];
+        return w.includes(t);
+      }
+      function weekdayIndex(t){
+        const map = {
+          sun:0, sunday:0,
+          mon:1, monday:1,
+          tue:2, tues:2, tuesday:2,
+          wed:3, weds:3, wednesday:3,
+          thu:4, thur:4, thurs:4, thursday:4,
+          fri:5, friday:5,
+          sat:6, saturday:6
+        };
+        return map[t] ?? -1;
+      }
+      function nextWeekday(base, targetDow, dir){
+        // dir: +1 for next/upcoming, -1 for previous
+        const b = new Date(base.getFullYear(), base.getMonth(), base.getDate());
+        const cur = b.getDay();
+        let delta = targetDow - cur;
+        if (dir === 1){
+          if (delta <= 0) delta += 7;
+        } else {
+          if (delta >= 0) delta -= 7;
+        }
+        b.setDate(b.getDate() + delta);
+        return b;
+      }
+
+      function normalizeSpaces(s){ return (s || "").trim().replace(/\s+/g," "); }
+
+      function parseCommand(q){
+        const raw = normalizeSpaces(q);
+        if (!raw) return { ok:false, msg:"Type a command… (try: help)" };
+
+        const lower = raw.toLowerCase();
+
+        // help
+        if (lower === "help" || lower === "?" ){
+          return { ok:true, kind:"help", msg:"help • today • tomorrow • yesterday • March 12 • March • 3/12 • 2026-03-12 • next monday • last fri • +7 / -3 (days) • next month / last month • next year / last year • start of month • end of month • m+1 / m-1 (months) • y+1 / y-1 (years)" };
+        }
+
+        // quick nav: m+1 / m-1 / y+1 / y-1
+        const navMatch = lower.match(/^([my])\s*([+\-])\s*(\d{1,2})$/);
+        if (navMatch){
+          const unit = navMatch[1];
+          const sign = navMatch[2] === "+" ? 1 : -1;
+          const amt = Number(navMatch[3]) || 0;
+          if (!amt) return { ok:false, msg:"Bad nav amount." };
+          return { ok:true, kind:"nav", unit, delta: sign*amt, msg: `${unit}${sign>0?"+":"-"}${amt}` };
+        }
+
+        // relative days: +7 / -3
+        const relMatch = lower.match(/^([+\-])\s*(\d{1,3})$/);
+        if (relMatch){
+          const sign = relMatch[1] === "+" ? 1 : -1;
+          const amt = Number(relMatch[2]) || 0;
+          const d = addDays(now, sign*amt);
+          return { ok:true, kind:"jump", iso: isoFromDate(d), msg:`→ ${isoFromDate(d)} (relative ${sign*amt}d)` };
+        }
+
+        // today / tomorrow / yesterday
+        if (lower === "today" || lower === "now"){
+          return { ok:true, kind:"jump", iso: todayISO, msg:`→ ${todayISO} (today)` };
+        }
+        if (lower === "tomorrow"){
+          const d = addDays(now, 1);
+          return { ok:true, kind:"jump", iso: isoFromDate(d), msg:`→ ${isoFromDate(d)} (tomorrow)` };
+        }
+        if (lower === "yesterday"){
+          const d = addDays(now, -1);
+          return { ok:true, kind:"jump", iso: isoFromDate(d), msg:`→ ${isoFromDate(d)} (yesterday)` };
+        }
+
+        // next year / last year
+        if (lower === "next year"){
+          return { ok:true, kind:"nav", unit:"y", delta:1, msg:"→ next year" };
+        }
+        if (lower === "last year" || lower === "previous year"){
+          return { ok:true, kind:"nav", unit:"y", delta:-1, msg:"→ last year" };
+        }
+
+        // next/last weekday: "next monday", "last fri", or just "monday" (upcoming)
+        const tokens = lower.split(" ");
+        if (tokens.length >= 1){
+          let dir = 1;
+          let wdTok = tokens[0];
+          if (tokens[0] === "next" && tokens[1]){ dir = 1; wdTok = tokens[1]; }
+          if ((tokens[0] === "last" || tokens[0] === "prev" || tokens[0] === "previous") && tokens[1]){ dir = -1; wdTok = tokens[1]; }
+          if (isWeekdayToken(wdTok)){
+            const target = weekdayIndex(wdTok);
+            const base = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const d = (tokens[0] === "next") ? nextWeekday(base, target, 1)
+                    : (tokens[0] === "last" || tokens[0] === "prev" || tokens[0] === "previous") ? nextWeekday(base, target, -1)
+                    : nextWeekday(base, target, 1);
+            const iso = isoFromDate(d);
+            const lbl = (tokens[0] === "last" || tokens[0] === "prev" || tokens[0] === "previous") ? "last" : "next";
+            return { ok:true, kind:"jump", iso, msg:`→ ${iso} (${lbl} ${wdTok})` };
+          }
+        }
+
+        // Month-only: "March" or "Mar"
+        // Also allow "March 2026"
+        const monthNames = months.map(m => m.toLowerCase());
+        const monthShort = months.map(m => m.slice(0,3).toLowerCase());
+        const mOnly = lower.match(/^([a-z]{3,9})(?:\s+(\d{4}|\d{2}))?$/);
+        if (mOnly){
+          const mTok = mOnly[1];
+          let idx = monthNames.indexOf(mTok);
+          if (idx === -1) idx = monthShort.indexOf(mTok.slice(0,3));
+          if (idx !== -1){
+            let y = mOnly[2] ? Number(mOnly[2]) : null;
+            if (y !== null){
+              if (y < 100) y = 2000 + y;
+            } else {
+              // Choose the closest year where this month is closest to now
+              // Compare first day of month for candidate years
+              const baseYear = now.getFullYear();
+              const candidates = [];
+              for (const yy of [baseYear-1, baseYear, baseYear+1, baseYear+2]){
+                candidates.push(new Date(yy, idx, 1));
+              }
+              const nowT = now.getTime();
+              candidates.sort((a,b) => Math.abs(a.getTime()-nowT) - Math.abs(b.getTime()-nowT));
+              y = candidates[0].getFullYear();
+            }
+            const iso = fmtKey(y, idx, 1);
+            return { ok:true, kind:"jump", iso, msg:`→ ${iso} (month view: ${months[idx]} ${y})` };
+          }
+        }
+
+        // Fall back to date parsing: "March 12", "3/12", "2026-03-12"
+        const iso = parseDateQuery(raw);
+        if (iso) return { ok:true, kind:"jump", iso, msg:`→ ${iso}` };
+
+        return { ok:false, msg:"Didn’t understand. Try: help" };
+      }
+
+      function cmdAutocomplete(q){
+        const raw = normalizeSpaces(q);
+        const lower = raw.toLowerCase();
+
+        if (!lower) return "";
+
+        const monthNames = months.map(m => m.toLowerCase());
+        const monthShort = months.map(m => m.slice(0,3).toLowerCase());
+
+        // month autocomplete
+        for (let i=0;i<months.length;i++){
+          const full = monthNames[i];
+          if (full.startsWith(lower) || monthShort[i].startsWith(lower)){
+            return months[i];
+          }
+        }
+
+        // weekday autocomplete
+        const wk = ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"];
+        for (const w of wk){
+          if (w.startsWith(lower)) return w;
+        }
+
+        // keyword autocomplete
+        const kws = ["today","tomorrow","yesterday","help","next month","last month","next year","last year","start of month","end of month","next monday","last friday","m+1","m-1","y+1","y-1","+7"];
+        for (const k of kws){
+          if (k.startsWith(lower)) return k;
+        }
+
+        return "";
+      }
+
+      function parseDateQuery(q){
+        const raw = (q || "").trim();
+        if (!raw) return null;
+
+        const lower = raw.toLowerCase();
+
+        if (lower === "today" || lower === "now"){
+          return todayISO;
+        }
+
+        // ISO: YYYY-MM-DD
+        const isoMatch = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+        if (isoMatch){
+          const y = Number(isoMatch[1]), m = Number(isoMatch[2]), d = Number(isoMatch[3]);
+          if (m>=1 && m<=12 && d>=1 && d<=31 && isValidYMD(y, m, d)) return `${y}-${pad2(m)}-${pad2(d)}`;
+        }
+
+        // Numeric: M/D, M-D, M.D (assume current year)
+        const numMatch = raw.match(/^(\d{1,2})[\/.\-](\d{1,2})(?:[\/.\-](\d{2,4}))?$/);
+        if (numMatch){
+          let m = Number(numMatch[1]);
+          let d = Number(numMatch[2]);
+          let y = numMatch[3] ? Number(numMatch[3]) : closestYearForMonthDay(m, d);
+          if (y < 100) y = 2000 + y; // 26 -> 2026
+          if (m>=1 && m<=12 && d>=1 && d<=31 && isValidYMD(y, m, d)) return `${y}-${pad2(m)}-${pad2(d)}`;
+        }
+
+        // Month name + day (+ optional year)
+        // Examples: "March 12", "Mar 12 2026", "12 March 2026"
+        const monthNames = months.map(m => m.toLowerCase());
+        const monthShort = months.map(m => m.slice(0,3).toLowerCase());
+
+        function monthIndexFromToken(tok){
+          const t = tok.toLowerCase();
+          let idx = monthNames.indexOf(t);
+          if (idx !== -1) return idx;
+          idx = monthShort.indexOf(t.slice(0,3));
+          if (idx !== -1) return idx;
+          return -1;
+        }
+
+        const tokens = raw.replace(/[,]+/g," ").split(/\s+/).filter(Boolean);
+        if (tokens.length >= 2){
+          // Try: Month Day Year?
+          let mi = monthIndexFromToken(tokens[0]);
+          if (mi !== -1){
+            const d = Number(tokens[1]);
+            let y = tokens[2] ? Number(tokens[2]) : closestYearForMonthDay(mi+1, d);
+            if (y < 100) y = 2000 + y;
+            if (d>=1 && d<=31 && isValidYMD(y, mi+1, d)) return `${y}-${pad2(mi+1)}-${pad2(d)}`;
+          }
+          // Try: Day Month Year?
+          mi = monthIndexFromToken(tokens[1]);
+          if (mi !== -1){
+            const d = Number(tokens[0]);
+            let y = tokens[2] ? Number(tokens[2]) : closestYearForMonthDay(mi+1, d);
+            if (y < 100) y = 2000 + y;
+            if (d>=1 && d<=31 && isValidYMD(y, mi+1, d)) return `${y}-${pad2(mi+1)}-${pad2(d)}`;
+          }
+        }
+
+        return null;
+      }
+
+      function openDrawer(iso, cell){
+        selectedISO = iso;
+        selectedCell = cell;
+
+        drawerTitle.textContent = iso;
+        const st = getState(iso);
+        drawerSub.textContent = st === "YES" ? "YES day — do things." :
+                                st === "NO"  ? "NO day — refuse." :
+                                "Unset — blank day.";
+        stateLine.textContent = `State: ${st ? st : "UNSET"}`;
+
+        const n = getNote(iso);
+        noteInput.value = n;
+        charCount.textContent = String(n.length);
+
+        backdrop.classList.add('open');
+        drawer.classList.add('open');
+
+        setTimeout(() => setYesBtn.focus(), 0);
+      }
+
+      function closeDrawer(){
+        backdrop.classList.remove('open');
+        drawer.classList.remove('open');
+        selectedISO = null;
+
+        if (selectedCell) selectedCell.focus();
+        selectedCell = null;
+      }
+
+      function animateStampFor(iso){
+        const cells = Array.from(grid.querySelectorAll('.day'));
+        for (const c of cells){
+          const label = c.getAttribute('aria-label') || "";
+          if (label.startsWith(iso)){
+            const stamp = c.querySelector('.stamp');
+            if (stamp){
+              stamp.classList.remove('pop');
+              void stamp.offsetWidth;
+              stamp.classList.add('pop');
+            }
+            break;
+          }
+        }
+      }
+
+      function applyState(v){
+        if (!selectedISO) return;
+        setState(selectedISO, v);
+        render();
+        animateStampFor(selectedISO);
+
+        const st = getState(selectedISO);
+        drawerSub.textContent = st === "YES" ? "YES day — do things." :
+                                st === "NO"  ? "NO day — refuse." :
+                                "Unset — blank day.";
+        stateLine.textContent = `State: ${st ? st : "UNSET"}`;
+      }
+
+      setYesBtn.addEventListener('click', () => applyState("YES"));
+      setNoBtn.addEventListener('click', () => applyState("NO"));
+      setUnsetBtn.addEventListener('click', () => applyState(null));
+
+      let noteTimer = null;
+      noteInput.addEventListener('input', () => {
+        const txt = noteInput.value || "";
+        charCount.textContent = String(txt.length);
+        if (!selectedISO) return;
+
+        clearTimeout(noteTimer);
+        noteTimer = setTimeout(() => {
+          setNote(selectedISO, txt);
+          render();
+        }, 220);
+      });
+
+      prevBtn.addEventListener('click', () => { view = new Date(view.getFullYear(), view.getMonth()-1, 1); render(); });
+      nextBtn.addEventListener('click', () => { view = new Date(view.getFullYear(), view.getMonth()+1, 1); render(); });
+      jumpTodayBtn.addEventListener('click', () => { view = new Date(now.getFullYear(), now.getMonth(), 1); render(); });
+
+      clearMonthBtn.addEventListener('click', () => {
+        const { y, m, daysInMonth } = monthMeta(view);
+        for (let d=1; d<=daysInMonth; d++){
+          const iso = fmtKey(y,m,d);
+          localStorage.removeItem(stateKey(iso));
+        }
+        render();
+      });
+
+      closeDrawerBtn.addEventListener('click', closeDrawer);
+      backdrop.addEventListener('click', closeDrawer);
+
+      // Command palette events
+      cmdBtn?.addEventListener("click", () => openCmd(""));
+      cmdCloseBtn?.addEventListener("click", closeCmd);
+      cmdBackdrop?.addEventListener("click", closeCmd);
+
+      function runCmd(){
+        const res = parseCommand(cmdInput?.value || "");
+        if (!res.ok){
+          if (cmdPreview) cmdPreview.textContent = res.msg || "—";
+          if (cmdInput){
+            cmdInput.blur();
+            setTimeout(() => cmdInput.focus(), 0);
+          }
+          return;
+        }
+        if (res.kind === "help"){
+          if (cmdPreview) cmdPreview.textContent = res.msg;
+          return;
+        }
+        // store successful command
+        try{ saveCmdToHistory(cmdInput?.value || ""); }catch(_){ }
+
+        if (res.kind === "nav"){
+          // navigate view without opening drawer
+          const y = view.getFullYear();
+          const m = view.getMonth();
+          if (res.unit === "m"){
+            view = new Date(y, m + res.delta, 1);
+          } else {
+            view = new Date(y + res.delta, m, 1);
+          }
+          render();
+          if (cmdPreview) cmdPreview.textContent = `→ ${months[view.getMonth()]} ${view.getFullYear()}`;
+          closeCmd();
+          return;
+        }
+        if (res.kind === "jump" && res.iso){
+          closeCmd();
+          jumpToISO(res.iso);
+          return;
+        }
+      }
+
+      function updateCmdPreview(){
+        const res = parseCommand(cmdInput?.value || "");
+        if (cmdPreview) cmdPreview.textContent = res.msg || "—";
+      }
+
+
+      // Command history (like a terminal)
+      const cmdHistory = JSON.parse(localStorage.getItem("ynd_cmd_history") || "[]");
+      let cmdHistIndex = cmdHistory.length; // points just after last
+
+      function saveCmdToHistory(txt){
+        const t = normalizeSpaces(txt);
+        if (!t) return;
+        // avoid duplicates in a row
+        if (cmdHistory.length && cmdHistory[cmdHistory.length-1] === t) return;
+        cmdHistory.push(t);
+        // cap
+        while (cmdHistory.length > 50) cmdHistory.shift();
+        localStorage.setItem("ynd_cmd_history", JSON.stringify(cmdHistory));
+        cmdHistIndex = cmdHistory.length;
+      }
+
+      cmdInput?.addEventListener("input", updateCmdPreview);
+
+      cmdInput?.addEventListener("keydown", (e) => {
+        if (e.key === "Enter"){ e.preventDefault(); runCmd(); return; }
+        if (e.key === "Escape"){ e.preventDefault(); closeCmd(); return; }
+        if (e.key === "Tab"){
+          const sug = cmdAutocomplete(cmdInput?.value || "");
+          if (sug){
+            e.preventDefault();
+            cmdInput.value = sug;
+            updateCmdPreview();
+          }
+          return;
+        }
+        if (e.key === "ArrowUp"){
+          if (cmdHistory.length){
+            e.preventDefault();
+            cmdHistIndex = Math.max(0, cmdHistIndex - 1);
+            cmdInput.value = cmdHistory[cmdHistIndex] || "";
+            updateCmdPreview();
+          }
+          return;
+        }
+        if (e.key === "ArrowDown"){
+          if (cmdHistory.length){
+            e.preventDefault();
+            cmdHistIndex = Math.min(cmdHistory.length, cmdHistIndex + 1);
+            cmdInput.value = (cmdHistIndex === cmdHistory.length) ? "" : (cmdHistory[cmdHistIndex] || "");
+            updateCmdPreview();
+          }
+          return;
+        }
+      });
+
+
+
+
+
+      window.addEventListener('keydown', (e) => {
+        // Cmd/Ctrl + K opens jump palette (even when drawer is closed)
+        const isCmdOpen = cmd?.classList.contains("open");
+        const isDrawerOpen = drawer.classList.contains('open');
+
+        const isK = (e.key || "").toLowerCase() === "k";
+        const mod = e.ctrlKey || e.metaKey;
+        if (mod && isK){
+          e.preventDefault();
+          if (isCmdOpen) closeCmd();
+          else openCmd("");
+          return;
+        }
+
+        // If command palette is open, Esc should close it first
+        if (isCmdOpen){
+          if (e.key === "Escape"){ e.preventDefault(); closeCmd(); return; }
+          return;
+        }
+
+        const isOpen = isDrawerOpen;
+        if (!isOpen) return;
+
+        if (e.key === "Escape"){ e.preventDefault(); closeDrawer(); return; }
+        if (e.key.toLowerCase() === "y"){ e.preventDefault(); applyState("YES"); return; }
+        if (e.key.toLowerCase() === "n"){ e.preventDefault(); applyState("NO"); return; }
+        if (e.key.toLowerCase() === "u"){ e.preventDefault(); applyState(null); return; }
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>
