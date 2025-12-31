@@ -5,6 +5,7 @@ import { mountNeonTdMini } from "./neon-td-mini.js";
 import { mountWordbeatMini } from "./wordbeat-mini.js";
 import { mountHopHopMini } from "./hophop-mini.js";
 import { mountEggMini } from "./egg-mini.js";
+import { mountArenaMini } from "./arena-mini.js";
 import { stopHeroAnimation, initHeroAnimation } from "./hero-animation.js";
 import { showLoading, hideLoading } from "./loading.js";
 
@@ -248,6 +249,14 @@ function openFullscreenDemo(appKey){
     if(muteBtn) muteBtn.textContent = muted ? "Unmute" : "Mute";
     if(hintEl) hintEl.textContent = "Arrows to move · Space to boost · Don't hit trails or walls!";
     overlay.classList.add("show-hint");
+  } else if(appKey === "arena"){
+    const { destroy, setMuted: sm, needsGesture } = mountArenaMini(vp);
+    cleanup = destroy;
+    muted = false;
+    sm(muted);
+    if(muteBtn) muteBtn.textContent = muted ? "Unmute" : "Mute";
+    if(hintEl) hintEl.textContent = "WASD or Arrows to move · Space to shoot · Survive the waves!";
+    overlay.classList.add("show-hint");
   } else {
     const d = document.createElement("div");
     d.style.cssText = "width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.82);font:600 14px/1.2 var(--font-main);letter-spacing:.02em;";
@@ -372,6 +381,14 @@ function openHeroDemo(appKey){
     const mb = getMuteBtn();
     if(mb) mb.textContent = muted ? "Unmute" : "Mute";
     setHint(true, "Arrows move · Space boost · Trail duel!");
+  } else if(appKey === "arena"){
+    const { destroy, setMuted: sm, needsGesture } = mountArenaMini(vp);
+    cleanup = destroy;
+    muted = false;
+    sm(muted);
+    const mb = getMuteBtn();
+    if(mb) mb.textContent = muted ? "Unmute" : "Mute";
+    setHint(true, "WASD/Arrows move · Space shoot · Survive!");
   } else {
     const d = document.createElement("div");
     d.style.cssText = "width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.82);font:600 12px/1.2 var(--font-main);letter-spacing:.02em;";
