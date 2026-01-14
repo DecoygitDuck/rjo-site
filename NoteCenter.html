@@ -3933,41 +3933,7 @@ function exportSession() {
         html += '.note-category{display:inline-block;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;padding:0.2rem 0.5rem;border-radius:999px;border:1px solid rgba(0,0,0,0.2);background:rgba(255,107,157,0.1);}';
         html += '.note-body{white-space:pre-wrap;font-size:0.95rem;margin-top:0.5rem;}';
         html += '.pinned{border-left-color:#ffb000;background:#fffbf0;}';
-
-/* Universal back button */
-#backToHome{
-  position:fixed; right:16px; top:16px;
-  padding:10px 16px;
-  background: rgba(0,0,0,0.75);
-  backdrop-filter: blur(10px);
-  border:1px solid rgba(255,255,255,0.2);
-  border-radius:12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-  color: #ffffff;
-  font: 600 13px/1 system-ui, sans-serif;
-  z-index:9999;
-  cursor:pointer;
-  transition:all .15s ease;
-  text-decoration:none;
-  display:flex;
-  align-items:center;
-  gap:6px;
-}
-#backToHome:hover{
-  background: rgba(255,255,255,0.15);
-  border-color: rgba(255,255,255,0.4);
-  transform:translateY(-1px);
-}
-#backToHome:active{transform:scale(0.97);}
-@media (max-width:640px){
-  #backToHome{padding:8px 12px; font-size:12px; right:12px; top:12px;}
-}
         html += '</style></head><body>';
-<a id="backToHome" href="index.html" title="Back to Homepage">
-  <span>←</span>
-  <span>Home</span>
-</a>
-
         html += '<h1>📝 NoteCenter Export</h1>';
         html += '<div class="meta">';
         html += '<strong>Exported:</strong> ' + exportedAt + '<br>';
