@@ -2839,15 +2839,22 @@ function initDarkMode() {
     // Apply dark mode
     if (APP_STATE.darkMode) {
         document.body.classList.add('dark-mode');
-        if (DOM.darkModeToggle) {
-            DOM.darkModeToggle.checked = true;
-        }
+    }
+
+    // Update checkbox state to match
+    if (DOM.darkModeToggle) {
+        DOM.darkModeToggle.checked = APP_STATE.darkMode;
     }
 }
 
 function toggleDarkMode() {
     APP_STATE.darkMode = !APP_STATE.darkMode;
     document.body.classList.toggle('dark-mode');
+
+    // Update checkbox state
+    if (DOM.darkModeToggle) {
+        DOM.darkModeToggle.checked = APP_STATE.darkMode;
+    }
 
     // Save preference
     try {
@@ -2883,9 +2890,11 @@ function initUIMode() {
     // Apply UI mode
     if (APP_STATE.uiMode === 'professional') {
         document.body.classList.add('mode-professional');
-        if (DOM.uiModeToggle) {
-            DOM.uiModeToggle.checked = true;
-        }
+    }
+
+    // Update checkbox state to match
+    if (DOM.uiModeToggle) {
+        DOM.uiModeToggle.checked = APP_STATE.uiMode === 'professional';
     }
 
     // Save default if not already saved
@@ -2905,6 +2914,11 @@ function toggleUIMode() {
         document.body.classList.add('mode-professional');
     } else {
         document.body.classList.remove('mode-professional');
+    }
+
+    // Update checkbox state
+    if (DOM.uiModeToggle) {
+        DOM.uiModeToggle.checked = APP_STATE.uiMode === 'professional';
     }
 
     // Save preference
